@@ -54,3 +54,15 @@ Content-Type: application/json
 
 DELETE http://localhost:5000/api/posts/1
 Authorization: Bearer Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUwODY4MCwiZXhwIjoxNzg2MTEzNDgwfQ.FxSBKrAqqP_29RvaC6QaSto78-Ii4X7rRqGqSRR6hK8
+
+###
+POST http://localhost:5000/api/posts/2/comments
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUyNjMzNCwiZXhwIjoxNzg2MTMxMTM0fQ.dj3iBmF0BNURPZIF7s68uMfkQi9B79_UQYf2EqmbCis
+Content-Type: application/json
+
+{
+  "content": "This is my first comment on TrendAfrica! 🎉"
+}
+
+###
+GET http://localhost:5000/api/posts/2/comments

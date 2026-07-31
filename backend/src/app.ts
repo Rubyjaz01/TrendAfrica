@@ -8,7 +8,7 @@ import authRoutes from "./routes/auth.routes";
 import postRoutes from "./routes/post.routes";
 import { errorHandler } from "./middleware/error.middleware";
 import likeRoutes from "./routes/like.routes";
-
+import commentRoutes from "./routes/comment.routes";
 const app = express();
 
 // Security middleware
@@ -21,7 +21,8 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
-app.use("/api/likes", likeRoutes);    
+app.use("/api/likes", likeRoutes);  
+app.use("/api", commentRoutes);
 // Parse URL-encoded requests
 app.use(express.urlencoded({ extended: true }));
 
