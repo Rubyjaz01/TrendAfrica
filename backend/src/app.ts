@@ -10,6 +10,7 @@ import { errorHandler } from "./middleware/error.middleware";
 import likeRoutes from "./routes/like.routes";
 import commentRoutes from "./routes/comment.routes";
 const app = express();
+import followRoutes from "./routes/follow.routes";
 
 // Security middleware
 app.use(helmet());
@@ -23,6 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/likes", likeRoutes);  
 app.use("/api", commentRoutes);
+app.use("/api", followRoutes);
 // Parse URL-encoded requests
 app.use(express.urlencoded({ extended: true }));
 

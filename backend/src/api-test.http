@@ -66,3 +66,46 @@ Content-Type: application/json
 
 ###
 GET http://localhost:5000/api/posts/2/comments
+
+
+###
+GET http://localhost:5000/api/posts
+
+
+###
+
+###
+POST http://localhost:5000/api/follow
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUzMTA3MSwiZXhwIjoxNzg2MTM1ODcxfQ.gjCROlT-Kv_NGjUPBdboF6qLFu3UYKSxkSFwbSF5P84
+Content-Type: application/json
+
+{
+  "followingId": 1
+}
+
+###
+
+###
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+###
+
+###
+POST http://localhost:5000/api/follow
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUzMTA3MSwiZXhwIjoxNzg2MTM1ODcxfQ.gjCROlT-Kv_NGjUPBdboF6qLFu3UYKSxkSFwbSF5P84
+Content-Type: application/json
+
+{
+  "followingId": 2
+}
+
+###
+DELETE http://localhost:5000/api/follow/2
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUzMTA3MSwiZXhwIjoxNzg2MTM1ODcxfQ.gjCROlT-Kv_NGjUPBdboF6qLFu3UYKSxkSFwbSF5P84
