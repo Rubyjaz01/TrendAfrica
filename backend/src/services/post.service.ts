@@ -1,5 +1,9 @@
 import prisma from "../config/prisma";
 import {
+  getPagination,
+  getPaginationMeta,
+} from "../utils/pagination";
+import {
   CreatePostInput,
   UpdatePostInput,
 } from "../validators/post.validator";
@@ -24,11 +28,16 @@ export async function createPost(
     },
   });
 }
-export async function getAllPosts() {
-  return prisma.post.findMany({
-    orderBy: {
-      createdAt: "desc",
-    },
+export async function getAllPosts(
+  page: number = 1,
+  limit: number = 10
+) {
+  const { skip, take } = getPagination(page, limit);
+
+  const posts = await prisma.post.findMany({
+    skip,
+    take,
+
     include: {
       author: {
         select: {
@@ -39,7 +48,20 @@ export async function getAllPosts() {
         },
       },
     },
+
+    orderBy: {
+      createdAt: "desc",
+    },
   });
+
+  const total = await prisma.post.count();
+
+const pagination = getPaginationMeta(total, page, limit);
+
+return {
+  ...pagination,
+  posts,
+};
 }
 export async function getPostById(id: number) {
   return prisma.post.findUnique({
@@ -125,4 +147,38 @@ export async function deletePost(
   return {
     message: "Post deleted successfully",
   };
+}
+export async function getFeed(userId: number) {
+  // Get the users that the current user follows
+  const following = await prisma.follow.findMany({
+    where: {
+      followerId: userId,
+    },
+    select: {
+      followingId: true,
+    },
+  });
+
+  const followingIds = following.map(f => f.followingId);
+
+  return prisma.post.findMany({
+    where: {
+      authorId: {
+        in: followingIds,
+      },
+    },
+    include: {
+      author: {
+        select: {
+          id: true,
+          fullName: true,
+          username: true,
+          avatar: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 }

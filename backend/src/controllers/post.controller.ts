@@ -9,6 +9,7 @@ import {
   getPostById,
   updatePost,
   deletePost,
+  getFeed,
 } from "../services/post.service";
 
 export async function create(req: Request, res: Response) {
@@ -38,13 +39,26 @@ export async function create(req: Request, res: Response) {
 }
 export async function getAll(req: Request, res: Response) {
   try {
-    const posts = await getAllPosts();
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const result = await getAllPosts(page, limit);
 
     return res.status(200).json({
-      success: true,
-      count: posts.length,
-      data: posts,
-    });
+  success: true,
+
+  pagination: {
+    total: result.total,
+    page: result.page,
+    limit: result.limit,
+    totalPages: result.totalPages,
+    hasNextPage: result.hasNextPage,
+    hasPreviousPage: result.hasPreviousPage,
+  },
+
+  count: result.posts.length,
+  data: result.posts,
+});
   } catch (error: any) {
     return res.status(500).json({
       success: false,
@@ -151,6 +165,22 @@ export async function remove(req: Request, res: Response) {
     return res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+}
+export async function feed(req: Request, res: Response) {
+  try {
+    const posts = await getFeed(req.userId!);
+
+    return res.status(200).json({
+      success: true,
+      count: posts.length,
+      data: posts,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch feed",
     });
   }
 }

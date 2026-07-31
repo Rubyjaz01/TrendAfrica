@@ -12,7 +12,7 @@ Content-Type: application/json
 ###
 
 PUT http://localhost:5000/api/auth/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTQ5NTI4NSwiZXhwIjoxNzg2MTAwMDg1fQ.J7Ip4_ic0oAiKOJYAU6SnpQo8CbhQwNA6PmOKz-AgpI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUzODc1NiwiZXhwIjoxNzg2MTQzNTU2fQ.RyUPwPrI4GsRvPGJLhGGPcMCIEo1TSrovMT5QWpIg8o
 Content-Type: application/json
 
 {
@@ -25,7 +25,7 @@ Content-Type: application/json
 ###
 
 POST http://localhost:5000/api/posts
-Authorization: Bearer Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUwODY4MCwiZXhwIjoxNzg2MTEzNDgwfQ.FxSBKrAqqP_29RvaC6QaSto78-Ii4X7rRqGqSRR6hK8
+Authorization: Bearer Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUzODg0MiwiZXhwIjoxNzg2MTQzNjQyfQ.DANLVe1X2W0Y25h_PK3xXWULJLDPWpm5DdZ4le2pngQ
 Content-Type: application/json
 
 {
@@ -43,7 +43,7 @@ GET http://localhost:5000/api/posts/1
 ###
 
 PUT http://localhost:5000/api/posts/1
-Authorization: Bearer Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUwODY4MCwiZXhwIjoxNzg2MTEzNDgwfQ.FxSBKrAqqP_29RvaC6QaSto78-Ii4X7rRqGqSRR6hK8
+Authorization: Bearer Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUzODg0MiwiZXhwIjoxNzg2MTQzNjQyfQ.DANLVe1X2W0Y25h_PK3xXWULJLDPWpm5DdZ4le2pngQ
 Content-Type: application/json
 
 {
@@ -122,3 +122,36 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhd
 ###
 GET http://localhost:5000/api/users/1/following
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUzMTA3MSwiZXhwIjoxNzg2MTM1ODcxfQ.gjCROlT-Kv_NGjUPBdboF6qLFu3UYKSxkSFwbSF5P84
+
+###
+GET http://localhost:5000/api/posts/feed
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUzMTA3MSwiZXhwIjoxNzg2MTM1ODcxfQ.gjCROlT-Kv_NGjUPBdboF6qLFu3UYKSxkSFwbSF5P84
+
+
+###
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+###
+
+POST http://localhost:5000/api/posts
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImlhdCI6MTc4NTUzODU3MCwiZXhwIjoxNzg2MTQzMzcwfQ.a9KDvJjlfOIaGC_YxenrdAu5-nyQFLbR7D-KsMFomUw
+Content-Type: application/json
+
+{
+  "content": "Hello everyone! I'm John, and this is my first TrendAfrica post."
+}
+
+###
+
+GET http://localhost:5000/api/posts?page=1&limit=2
+
+
+###
+
+GET http://localhost:5000/api/posts?page=1&limit=2

@@ -6,6 +6,7 @@ import {
   getOne,
   update,
   remove,
+  feed,
 } from "../controllers/post.controller";
 
 const router = Router();
@@ -17,7 +18,7 @@ router.delete("/:id", authenticate, remove);
 
 export default router;
 router.get("/", getAll);
-
+router.get("/feed", authenticate, feed);
 router.get("/:id", getOne);
 
 router.post("/", authenticate, create);
