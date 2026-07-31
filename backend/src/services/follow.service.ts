@@ -72,3 +72,45 @@ export async function unfollowUser(
     message: "User unfollowed successfully",
   };
 }
+export async function getFollowers(userId: number) {
+  return prisma.follow.findMany({
+    where: {
+      followingId: userId,
+    },
+    include: {
+      follower: {
+        select: {
+          id: true,
+          fullName: true,
+          username: true,
+          avatar: true,
+          bio: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
+export async function getFollowing(userId: number) {
+  return prisma.follow.findMany({
+    where: {
+      followerId: userId,
+    },
+    include: {
+      following: {
+        select: {
+          id: true,
+          fullName: true,
+          username: true,
+          avatar: true,
+          bio: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
