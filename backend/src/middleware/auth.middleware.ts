@@ -11,6 +11,7 @@ export function authenticate(
   next: NextFunction
 ) {
   const authHeader = req.headers.authorization;
+  console.log("Authorization Header:", authHeader); // Debugging line
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({
@@ -30,7 +31,9 @@ export function authenticate(
     req.userId = decoded.userId;
 
     next();
-  } catch {
+  } catch (error) {
+    console.error("JWT verification error:", error);
+
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token.",

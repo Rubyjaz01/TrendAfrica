@@ -4,7 +4,10 @@ import {
   registerUser,
   loginUser,
   getCurrentUser,
+  updateProfile,
 } from "../services/auth.service";
+
+import { updateProfileSchema } from "../validators/user.validator";
 
 export async function register(req: Request, res: Response) {
   try {
@@ -68,6 +71,31 @@ export async function me(req: Request, res: Response) {
     return res.status(404).json({
       success: false,
       message: error.message,
+    });
+  }
+}
+export async function updateUserProfile(req: Request, res: Response) {
+  try {
+    const data = updateProfileSchema.parse(req.body);
+
+    const user = await updateProfile(req.userId!, data);
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: user,
+    });
+  } catch (error: any) {
+    if (error.name === "ZodError") {
+      return res.status(400).json({
+        success: false,
+        errors: error.errors,
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Profile update failed",
     });
   }
 }

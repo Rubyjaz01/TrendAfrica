@@ -6,13 +6,45 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-
 model User {
-  id        Int      @id @default(autoincrement())
-  fullName  String
-  email     String   @unique
-  password  String
-  role      String   @default("USER")
+  id          Int      @id @default(autoincrement())
+  fullName    String
+  email       String   @unique
+  password    String
+  role        String   @default("USER")
+
+  username    String?  @unique
+  bio         String?
+  avatar      String?
+  location    String?
+  website     String?
+
+  posts       Post[]
+  likes       Like[]   // 👈 Add this
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+model Post {
+  id         Int      @id @default(autoincrement())
+  content    String
+  image      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  authorId   Int
+  author     User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  likes      Like[]   // 👈 Add this
+}
+model Like {
+  userId Int
+  postId Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@id([userId, postId])
 }

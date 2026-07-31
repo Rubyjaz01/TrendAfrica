@@ -1,0 +1,56 @@
+
+###
+
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "bashiru@example.com",
+  "password": "password123"
+}
+
+###
+
+PUT http://localhost:5000/api/auth/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTQ5NTI4NSwiZXhwIjoxNzg2MTAwMDg1fQ.J7Ip4_ic0oAiKOJYAU6SnpQo8CbhQwNA6PmOKz-AgpI
+Content-Type: application/json
+
+{
+  "username": "bashiru",
+  "bio": "Software Engineer and Founder of TrendAfrica",
+  "location": "Borno, Nigeria",
+  "website": "https://trendafrica.com"
+}
+
+###
+
+POST http://localhost:5000/api/posts
+Authorization: Bearer Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUwODY4MCwiZXhwIjoxNzg2MTEzNDgwfQ.FxSBKrAqqP_29RvaC6QaSto78-Ii4X7rRqGqSRR6hK8
+Content-Type: application/json
+
+{
+  "content": "Hello TrendAfrica! 🚀 This is my very first post."
+}
+
+###
+
+GET http://localhost:5000/api/posts
+
+###
+
+GET http://localhost:5000/api/posts/1
+
+###
+
+PUT http://localhost:5000/api/posts/1
+Authorization: Bearer Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUwODY4MCwiZXhwIjoxNzg2MTEzNDgwfQ.FxSBKrAqqP_29RvaC6QaSto78-Ii4X7rRqGqSRR6hK8
+Content-Type: application/json
+
+{
+  "content": "My first TrendAfrica post has been updated! 🚀"
+}
+
+###
+
+DELETE http://localhost:5000/api/posts/1
+Authorization: Bearer Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTUwODY4MCwiZXhwIjoxNzg2MTEzNDgwfQ.FxSBKrAqqP_29RvaC6QaSto78-Ii4X7rRqGqSRR6hK8

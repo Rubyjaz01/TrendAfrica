@@ -1,8 +1,9 @@
 import bcrypt from "bcrypt";
 import prisma from "../config/prisma";
+import { Request, Response } from "express";
 import { RegisterInput, LoginInput } from "../validators/auth.validator";
 import { generateToken } from "../utils/jwt";
-
+import { UpdateProfileInput, updateProfileSchema } from "../validators/user.validator";
 export async function registerUser(data: RegisterInput) {
   const { fullName, email, password } = data;
 
@@ -92,4 +93,47 @@ export async function getCurrentUser(userId: number) {
   }
 
   return user;
+}
+export async function updateProfile(
+  userId: number,
+  data: UpdateProfileInput
+) {
+  const user = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data,
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      username: true,
+      bio: true,
+      avatar: true,
+      location: true,
+      website: true,
+      role: true,
+      updatedAt: true,
+    },
+  });
+
+  return user;
+}
+export async function updateUserProfile(req: Request, res: Response) {
+  try {
+    const data = updateProfileSchema.parse(req.body);
+
+    const user = await updateProfile(req.userId!, data);
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: user,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
 }
