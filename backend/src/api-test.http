@@ -155,3 +155,7 @@ GET http://localhost:5000/api/posts?page=1&limit=2
 ###
 
 GET http://localhost:5000/api/posts?page=1&limit=2
+
+###
+GET http://localhost:5000/api/search/users?q=john
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTc4NTU0MjA4NCwiZXhwIjoxNzg2MTQ2ODg0fQ.jbxtwzqSMsBjDc0oEfBDGWR60MrdGWZa8uqF7RjfsBk
