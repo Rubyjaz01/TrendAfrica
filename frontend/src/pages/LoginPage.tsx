@@ -5,12 +5,13 @@ type LoginForm = {
   email: string;
   password: string;
 };
-
+import { useNavigate } from "react-router-dom";
 export default function LoginPage() {
   const {
     register,
     handleSubmit,
   } = useForm<LoginForm>();
+  const navigate = useNavigate();
 
   async function onSubmit(data: LoginForm) {
   try {
@@ -20,9 +21,16 @@ const response = await login(data);
 
 console.log("Response:", response);
 
-    console.log(response);
+// Save JWT
+localStorage.setItem("token", response.token);
 
-    alert("Login successful!");
+// Save logged-in user
+localStorage.setItem(
+  "user",
+  JSON.stringify(response.user)
+);
+
+navigate("/");
   } catch (error: any) {
     console.error(error);
 
