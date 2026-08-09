@@ -33,7 +33,11 @@ export default function HomePage() {
 
       setPosts(response.data);
     } catch (error) {
-      console.error("Failed to load posts:", error);
+      console.error(
+        "Failed to load posts:",
+        error
+      );
+
       setError("Failed to load posts.");
     } finally {
       setLoading(false);
@@ -44,17 +48,31 @@ export default function HomePage() {
     loadPosts();
   }, [loadPosts]);
 
+  function handlePostDeleted(postId: number) {
+    setPosts((currentPosts) =>
+      currentPosts.filter(
+        (post) => post.id !== postId
+      )
+    );
+  }
+
   if (loading) {
-    return <p className="text-center">Loading posts...</p>;
+    return (
+      <p className="text-center">
+        Loading posts...
+      </p>
+    );
   }
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <h2 className="text-2xl font-bold">
+      <h1 className="text-2xl font-bold">
         TrendAfrica Feed
-      </h2>
+      </h1>
 
-      <CreatePost onPostCreated={loadPosts} />
+      <CreatePost
+        onPostCreated={loadPosts}
+      />
 
       {error && (
         <p className="text-center text-red-600">
@@ -68,7 +86,11 @@ export default function HomePage() {
         </p>
       ) : (
         posts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <PostCard
+            key={post.id}
+            post={post}
+            onPostDeleted={handlePostDeleted}
+          />
         ))
       )}
     </div>
