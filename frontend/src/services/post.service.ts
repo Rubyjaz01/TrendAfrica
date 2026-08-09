@@ -11,3 +11,11 @@ export async function getFeed() {
 
   return response.data;
 }
+export async function createPost(data: {
+  content: string;
+  image?: string;
+}) {
+  const response = await api.post("/posts", data);
+
+  return response.data;
+}

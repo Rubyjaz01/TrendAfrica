@@ -24,13 +24,24 @@ export default function RegisterPage() {
 
 console.log("Registration response:", response);
 
+localStorage.setItem("token", response.data.token);
+
+localStorage.setItem(
+  "user",
+  JSON.stringify(response.data.user)
+);
+
+navigate("/");
+
+console.log("Registration response:", response);
+
 // Save JWT
-localStorage.setItem("token", response.token);
+localStorage.setItem("token", response.data.token);
 
 // Save logged-in user
 localStorage.setItem(
   "user",
-  JSON.stringify(response.user)
+  JSON.stringify(response.data.user)
 );
 
 // Redirect to Home

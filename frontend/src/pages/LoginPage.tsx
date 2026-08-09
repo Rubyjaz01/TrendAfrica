@@ -21,13 +21,22 @@ const response = await login(data);
 
 console.log("Response:", response);
 
+localStorage.setItem("token", response.data.token);
+
+localStorage.setItem(
+  "user",
+  JSON.stringify(response.data.user)
+);
+
+alert("Login successful!");
+
 // Save JWT
-localStorage.setItem("token", response.token);
+localStorage.setItem("token", response.data.token);
 
 // Save logged-in user
 localStorage.setItem(
   "user",
-  JSON.stringify(response.user)
+  JSON.stringify(response.data.user)
 );
 
 navigate("/");

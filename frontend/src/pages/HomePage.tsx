@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { getPosts } from "../services/post.service";
+import { useCallback, useEffect, useState } from "react";
+import CreatePost from "../components/CreatePost";
 import PostCard from "../components/PostCard";
+import { getPosts } from "../services/post.service";
 
 type Post = {
   id: number;
@@ -22,35 +23,29 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    async function loadPosts() {
-      try {
-        const response = await getPosts();
+  const loadPosts = useCallback(async () => {
+    try {
+      setError("");
 
-        console.log("Posts response:", response);
+      const response = await getPosts();
 
-        setPosts(response.data);
-      } catch (error) {
-        console.error("Failed to load posts:", error);
-        setError("Failed to load posts.");
-      } finally {
-        setLoading(false);
-      }
+      console.log("Posts response:", response);
+
+      setPosts(response.data);
+    } catch (error) {
+      console.error("Failed to load posts:", error);
+      setError("Failed to load posts.");
+    } finally {
+      setLoading(false);
     }
-
-    loadPosts();
   }, []);
+
+  useEffect(() => {
+    loadPosts();
+  }, [loadPosts]);
 
   if (loading) {
     return <p className="text-center">Loading posts...</p>;
-  }
-
-  if (error) {
-    return (
-      <p className="text-center text-red-600">
-        {error}
-      </p>
-    );
   }
 
   return (
@@ -59,14 +54,22 @@ export default function HomePage() {
         TrendAfrica Feed
       </h2>
 
+      <CreatePost onPostCreated={loadPosts} />
+
+      {error && (
+        <p className="text-center text-red-600">
+          {error}
+        </p>
+      )}
+
       {posts.length === 0 ? (
         <p className="text-gray-500">
           No posts available.
         </p>
       ) : (
         posts.map((post) => (
-  <PostCard key={post.id} post={post} />
-))
+          <PostCard key={post.id} post={post} />
+        ))
       )}
     </div>
   );
