@@ -22,8 +22,16 @@ export default function Navigation() {
   }
 
   useEffect(() => {
+  loadUnreadCount();
+
+  const interval = setInterval(() => {
     loadUnreadCount();
-  }, []);
+  }, 5000);
+
+  return () => {
+    clearInterval(interval);
+  };
+}, []);
 
   function handleLogout() {
     localStorage.removeItem("token");
