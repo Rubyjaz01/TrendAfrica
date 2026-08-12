@@ -1,7 +1,29 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../api/api";
 
 export default function Navigation() {
   const navigate = useNavigate();
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  async function loadUnreadCount() {
+    try {
+      const response = await api.get(
+        "/notifications/unread-count"
+      );
+      setUnreadCount(response.data.data.count);
+    } catch (error) {
+      console.error(
+        "Failed to load unread notification count:",
+        error
+      );
+    }
+  }
+
+  useEffect(() => {
+    loadUnreadCount();
+  }, []);
 
   function handleLogout() {
     localStorage.removeItem("token");
@@ -13,6 +35,7 @@ export default function Navigation() {
   return (
     <nav className="border-b bg-white">
       <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3">
+
         <Link
           to="/"
           className="font-medium text-gray-700 hover:text-blue-600"
@@ -36,9 +59,15 @@ export default function Navigation() {
 
         <Link
           to="/notifications"
-          className="font-medium text-gray-700 hover:text-blue-600"
+          className="relative font-medium text-gray-700 hover:text-blue-600"
         >
           Notifications
+
+          {unreadCount > 0 && (
+  <span className="ml-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-red-600 px-2 text-sm font-bold text-white">
+    {unreadCount > 99 ? "99+" : unreadCount}
+  </span>
+)}
         </Link>
 
         <button
@@ -47,6 +76,7 @@ export default function Navigation() {
         >
           Logout
         </button>
+
       </div>
     </nav>
   );

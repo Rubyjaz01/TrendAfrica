@@ -8,12 +8,19 @@ import HomePage from "../pages/HomePage";
 import ProfilePage from "../pages/ProfilePage";
 import SearchPage from "../pages/SearchPage";
 import UserProfilePage from "../pages/UserProfilePage";
+import NotificationsPage from "../pages/NotificationsPage";
+
+import Navigation from "../components/Navigation";
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
+      <Navigation />
+
       <Routes>
+
         {/* Public Routes */}
+
         <Route
           path="/login"
           element={<LoginPage />}
@@ -25,6 +32,7 @@ export default function AppRouter() {
         />
 
         {/* Protected Home Route */}
+
         <Route
           path="/"
           element={
@@ -35,6 +43,7 @@ export default function AppRouter() {
         />
 
         {/* Protected Profile Route */}
+
         <Route
           path="/profile"
           element={
@@ -45,6 +54,7 @@ export default function AppRouter() {
         />
 
         {/* Protected Search Route */}
+
         <Route
           path="/search"
           element={
@@ -53,20 +63,36 @@ export default function AppRouter() {
             </ProtectedRoute>
           }
         />
+
+        {/* Protected Notifications Route */}
+
         <Route
-  path="/users/:id"
-  element={
-    <ProtectedRoute>
-      <UserProfilePage />
-    </ProtectedRoute>
-  }
-/>
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Protected User Profile Route */}
+
+        <Route
+          path="/users/:id"
+          element={
+            <ProtectedRoute>
+              <UserProfilePage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Fallback */}
+
         <Route
           path="*"
           element={<LoginPage />}
         />
+
       </Routes>
     </BrowserRouter>
   );

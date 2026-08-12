@@ -6,42 +6,50 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 model User {
-  id          Int      @id @default(autoincrement())
-  fullName    String
-  email       String   @unique
-  password    String
-  role        String   @default("USER")
+  id       Int    @id @default(autoincrement())
+  fullName String
+  email    String @unique
+  password String
+  role     String @default("USER")
 
-  username    String?  @unique
-  bio         String?
-  avatar      String?
-  location    String?
-  website     String?
+  username String? @unique
+  bio      String?
+  avatar   String?
+  location String?
+  website  String?
 
-  posts       Post[]
-  likes       Like[]   
-  comments    Comment[]
+  posts    Post[]
+  likes    Like[]
+  comments Comment[]
 
-  following  Follow[] @relation("Following")
-  followers  Follow[] @relation("Followers")
+  following Follow[] @relation("Following")
+  followers Follow[] @relation("Followers")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsSent     Notification[] @relation("NotificationActor")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
+
 model Post {
-  id         Int      @id @default(autoincrement())
-  content    String
-  image      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  content   String
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  authorId   Int
-  author     User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  likes      Like[]  
-  comments   Comment[]
+  likes    Like[]
+  comments Comment[]
+
+  notifications Notification[]
 }
+
 model Like {
   userId Int
   postId Int
@@ -53,12 +61,13 @@ model Like {
 
   @@id([userId, postId])
 }
-model Comment {
-  id        Int      @id @default(autoincrement())
-  content   String
 
-  userId    Int
-  postId    Int
+model Comment {
+  id      Int    @id @default(autoincrement())
+  content String
+
+  userId Int
+  postId Int
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -68,13 +77,33 @@ model Comment {
 }
 
 model Follow {
-  followerId Int
+  followerId  Int
   followingId Int
 
-  follower User @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade)
+  follower  User @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade)
   following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
   @@id([followerId, followingId])
+}
+
+model Notification {
+  id      Int     @id @default(autoincrement())
+  type    String
+  message String
+  read    Boolean @default(false)
+
+  recipientId Int
+  actorId     Int
+  postId      Int?
+
+  recipient User  @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor     User  @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  post      Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([recipientId, read])
+  @@index([recipientId, createdAt])
 }
