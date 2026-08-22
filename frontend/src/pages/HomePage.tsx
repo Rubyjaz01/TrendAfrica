@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import CreatePost from "../components/CreatePost";
 import PostCard from "../components/PostCard";
-import { getPosts } from "../services/post.service";
+import { getFeed } from "../services/post.service";
 
 type Post = {
   id: number;
@@ -26,19 +26,20 @@ export default function HomePage() {
   const loadPosts = useCallback(async () => {
     try {
       setError("");
+      setLoading(true);
 
-      const response = await getPosts();
+      const response = await getFeed();
 
-      console.log("Posts response:", response);
+      console.log("Feed response:", response);
 
       setPosts(response.data);
     } catch (error) {
       console.error(
-        "Failed to load posts:",
+        "Failed to load feed:",
         error
       );
 
-      setError("Failed to load posts.");
+      setError("Failed to load feed.");
     } finally {
       setLoading(false);
     }
@@ -59,7 +60,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <p className="text-center">
-        Loading posts...
+        Loading feed...
       </p>
     );
   }

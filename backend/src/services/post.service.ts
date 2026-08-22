@@ -7,6 +7,7 @@ import {
   CreatePostInput,
   UpdatePostInput,
 } from "../validators/post.validator";
+
 export async function createPost(
   authorId: number,
   data: CreatePostInput
@@ -28,16 +29,19 @@ export async function createPost(
     },
   });
 }
+
 export async function getAllPosts(
   page: number = 1,
   limit: number = 10
 ) {
-  const { skip, take } = getPagination(page, limit);
+  const { skip, take } = getPagination(
+    page,
+    limit
+  );
 
   const posts = await prisma.post.findMany({
     skip,
     take,
-
     include: {
       author: {
         select: {
@@ -48,7 +52,6 @@ export async function getAllPosts(
         },
       },
     },
-
     orderBy: {
       createdAt: "desc",
     },
@@ -56,14 +59,21 @@ export async function getAllPosts(
 
   const total = await prisma.post.count();
 
-const pagination = getPaginationMeta(total, page, limit);
+  const pagination = getPaginationMeta(
+    total,
+    page,
+    limit
+  );
 
-return {
-  ...pagination,
-  posts,
-};
+  return {
+    ...pagination,
+    posts,
+  };
 }
-export async function getPostById(id: number) {
+
+export async function getPostById(
+  id: number
+) {
   return prisma.post.findUnique({
     where: {
       id,
@@ -79,7 +89,7 @@ export async function getPostById(id: number) {
       },
     },
   });
-}  
+}
 
 export async function updatePost(
   id: number,
@@ -120,6 +130,7 @@ export async function updatePost(
     },
   });
 }
+
 export async function deletePost(
   id: number,
   authorId: number
@@ -148,8 +159,10 @@ export async function deletePost(
     message: "Post deleted successfully",
   };
 }
-export async function getFeed(userId: number) {
-  // Get the users that the current user follows
+
+export async function getFeed(
+  userId: number
+) {
   const following = await prisma.follow.findMany({
     where: {
       followerId: userId,
@@ -159,14 +172,45 @@ export async function getFeed(userId: number) {
     },
   });
 
-  const followingIds = following.map(f => f.followingId);
+  const followingIds = following.map(
+    (follow) => follow.followingId
+  );
+
+  // If the user follows nobody,
+  // show the latest public posts.
+  if (followingIds.length === 0) {
+    return prisma.post.findMany({
+      take: 20,
+      include: {
+        author: {
+          select: {
+            id: true,
+            fullName: true,
+            username: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
+  // Include the current user's own posts
+  // together with posts from followed users.
+  const feedAuthorIds = [
+    userId,
+    ...followingIds,
+  ];
 
   return prisma.post.findMany({
     where: {
       authorId: {
-        in: followingIds,
+        in: feedAuthorIds,
       },
     },
+    take: 20,
     include: {
       author: {
         select: {
