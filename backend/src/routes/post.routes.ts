@@ -9,6 +9,7 @@ import {
   remove,
   feed,
 } from "../controllers/post.controller";
+import upload from "../config/upload";
 
 const router = Router();
 
@@ -22,7 +23,12 @@ router.get("/feed", authenticate, feed);
 router.get("/:id", getOne);
 
 // Create post
-router.post("/", authenticate, create);
+router.post(
+  "/",
+  authenticate,
+  upload.single("image"),
+  create
+);
 
 // Update post
 router.put("/:id", authenticate, update);

@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
+
 import {
   createPostSchema,
   updatePostSchema,
 } from "../validators/post.validator";
+
 import {
   createPost,
   getAllPosts,
@@ -12,11 +14,29 @@ import {
   getFeed,
 } from "../services/post.service";
 
+import { uploadPostImage } from "../services/media.service";
+
 export async function create(req: Request, res: Response) {
   try {
     const data = createPostSchema.parse(req.body);
 
-    const post = await createPost(req.userId!, data);
+    let image: string | undefined;
+
+    if (req.file) {
+      const uploadResult = await uploadPostImage(
+        req.file.buffer
+      );
+
+      image = uploadResult.image;
+    }
+
+    const post = await createPost(
+      req.userId!,
+      {
+        ...data,
+        ...(image && { image }),
+      }
+    );
 
     return res.status(201).json({
       success: true,
@@ -33,11 +53,16 @@ export async function create(req: Request, res: Response) {
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Failed to create post",
+      message:
+        error.message || "Failed to create post",
     });
   }
 }
-export async function getAll(req: Request, res: Response) {
+
+export async function getAll(
+  req: Request,
+  res: Response
+) {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
@@ -45,28 +70,33 @@ export async function getAll(req: Request, res: Response) {
     const result = await getAllPosts(page, limit);
 
     return res.status(200).json({
-  success: true,
+      success: true,
 
-  pagination: {
-    total: result.total,
-    page: result.page,
-    limit: result.limit,
-    totalPages: result.totalPages,
-    hasNextPage: result.hasNextPage,
-    hasPreviousPage: result.hasPreviousPage,
-  },
+      pagination: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      },
 
-  count: result.posts.length,
-  data: result.posts,
-});
+      count: result.posts.length,
+      data: result.posts,
+    });
   } catch (error: any) {
     return res.status(500).json({
       success: false,
-      message: error.message || "Failed to fetch posts",
+      message:
+        error.message || "Failed to fetch posts",
     });
   }
 }
-export async function getOne(req: Request, res: Response) {
+
+export async function getOne(
+  req: Request,
+  res: Response
+) {
   try {
     const id = Number(req.params.id);
 
@@ -86,19 +116,26 @@ export async function getOne(req: Request, res: Response) {
   } catch (error: any) {
     return res.status(500).json({
       success: false,
-      message: error.message || "Failed to fetch post",
+      message:
+        error.message || "Failed to fetch post",
     });
   }
 }
 
-
-export async function update(req: Request, res: Response) {
+export async function update(
+  req: Request,
+  res: Response
+) {
   try {
     const id = Number(req.params.id);
 
     const data = updatePostSchema.parse(req.body);
 
-    const post = await updatePost(id, req.userId!, data);
+    const post = await updatePost(
+      id,
+      req.userId!,
+      data
+    );
 
     return res.status(200).json({
       success: true,
@@ -123,7 +160,8 @@ export async function update(req: Request, res: Response) {
     if (error.message === "Unauthorized") {
       return res.status(403).json({
         success: false,
-        message: "You can only edit your own posts.",
+        message:
+          "You can only edit your own posts.",
       });
     }
 
@@ -134,7 +172,10 @@ export async function update(req: Request, res: Response) {
   }
 }
 
-export async function remove(req: Request, res: Response) {
+export async function remove(
+  req: Request,
+  res: Response
+) {
   try {
     const id = Number(req.params.id);
 
@@ -158,7 +199,8 @@ export async function remove(req: Request, res: Response) {
     if (error.message === "Unauthorized") {
       return res.status(403).json({
         success: false,
-        message: "You can only delete your own posts.",
+        message:
+          "You can only delete your own posts.",
       });
     }
 
@@ -168,7 +210,11 @@ export async function remove(req: Request, res: Response) {
     });
   }
 }
-export async function feed(req: Request, res: Response) {
+
+export async function feed(
+  req: Request,
+  res: Response
+) {
   try {
     const posts = await getFeed(req.userId!);
 
@@ -180,7 +226,8 @@ export async function feed(req: Request, res: Response) {
   } catch (error: any) {
     return res.status(500).json({
       success: false,
-      message: error.message || "Failed to fetch feed",
+      message:
+        error.message || "Failed to fetch feed",
     });
   }
 }

@@ -107,3 +107,20 @@ export async function uploadCoverImage(
 
   return user;
 }
+export async function uploadPostImage(
+  fileBuffer: Buffer
+) {
+  if (!fileBuffer || fileBuffer.length === 0) {
+    throw new AppError("No image file provided", 400);
+  }
+
+  const result = await uploadImage(
+    fileBuffer,
+    "trendafrica/posts"
+  );
+
+  return {
+    image: result.url,
+    publicId: result.publicId,
+  };
+}

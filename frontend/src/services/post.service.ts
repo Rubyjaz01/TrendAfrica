@@ -12,11 +12,26 @@ export async function getFeed() {
   return response.data;
 }
 
-export async function createPost(data: {
+type CreatePostData = {
   content: string;
-  image?: string;
-}) {
-  const response = await api.post("/posts", data);
+  image?: File | null;
+};
+
+export async function createPost(
+  data: CreatePostData
+) {
+  const formData = new FormData();
+
+  formData.append("content", data.content);
+
+  if (data.image) {
+    formData.append("image", data.image);
+  }
+
+  const response = await api.post(
+    "/posts",
+    formData
+  );
 
   return response.data;
 }
