@@ -12,6 +12,9 @@ import likeRoutes from "./routes/like.routes";
 import commentRoutes from "./routes/comment.routes";
 const app = express();
 import followRoutes from "./routes/follow.routes";
+import userRoutes from "./routes/user.routes";
+import notificationRoutes from "./routes/notification.routes";
+import mediaRoutes from "./routes/media.routes";
 
 // Security middleware
 app.use(helmet());
@@ -27,6 +30,9 @@ app.use("/api", searchRoutes);
 app.use("/api/likes", likeRoutes);  
 app.use("/api", commentRoutes);
 app.use("/api", followRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api", notificationRoutes);
+app.use("/api/media", mediaRoutes);
 // Parse URL-encoded requests
 app.use(express.urlencoded({ extended: true }));
 

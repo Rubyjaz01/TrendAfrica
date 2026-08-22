@@ -5,7 +5,34 @@ import {
   unfollowUser,
   getFollowers,
   getFollowing,
+  isFollowing,
 } from "../services/follow.service";
+export async function checkFollowing(
+  req: Request,
+  res: Response
+) {
+  try {
+    const followerId = req.userId!;
+    const followingId = Number(req.params.id);
+
+    const result = await isFollowing(
+      followerId,
+      followingId
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to check follow status",
+    });
+  }
+}
 
 export async function follow(req: Request, res: Response) {
   try {

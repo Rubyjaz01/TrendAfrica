@@ -1,13 +1,18 @@
 import prisma from "../config/prisma";
 import AppError from "../errors/AppError";
+import { createNotification } from "./notification.service";
 
+// Follow a user
 export async function followUser(
   followerId: number,
   followingId: number
 ) {
   // Users cannot follow themselves
   if (followerId === followingId) {
-    throw new AppError("You cannot follow yourself", 400);
+    throw new AppError(
+      "You cannot follow yourself",
+      400
+    );
   }
 
   // Check if the user to follow exists
@@ -18,52 +23,76 @@ export async function followUser(
   });
 
   if (!user) {
-    throw new AppError("User not found", 404);
+    throw new AppError(
+      "User not found",
+      404
+    );
   }
 
   // Check if already following
-  const existingFollow = await prisma.follow.findUnique({
-    where: {
-      followerId_followingId: {
-        followerId,
-        followingId,
+  const existingFollow =
+    await prisma.follow.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId: followerId,
+          followingId: followingId,
+        },
       },
-    },
-  });
+    });
 
   if (existingFollow) {
-    throw new AppError("You are already following this user", 400);
+    throw new AppError(
+      "You are already following this user",
+      400
+    );
   }
 
-  return prisma.follow.create({
+  // Create follow
+  const follow = await prisma.follow.create({
     data: {
-      followerId,
-      followingId,
+      followerId: followerId,
+      followingId: followingId,
     },
   });
+
+  // Notify the user being followed
+  await createNotification(
+    followingId,
+    followerId,
+    "FOLLOW",
+    "Someone started following you."
+  );
+
+  return follow;
 }
+
+// Unfollow a user
 export async function unfollowUser(
   followerId: number,
   followingId: number
 ) {
-  const follow = await prisma.follow.findUnique({
-    where: {
-      followerId_followingId: {
-        followerId,
-        followingId,
+  const follow =
+    await prisma.follow.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId: followerId,
+          followingId: followingId,
+        },
       },
-    },
-  });
+    });
 
   if (!follow) {
-    throw new AppError("You are not following this user", 404);
+    throw new AppError(
+      "You are not following this user",
+      404
+    );
   }
 
   await prisma.follow.delete({
     where: {
       followerId_followingId: {
-        followerId,
-        followingId,
+        followerId: followerId,
+        followingId: followingId,
       },
     },
   });
@@ -72,7 +101,11 @@ export async function unfollowUser(
     message: "User unfollowed successfully",
   };
 }
-export async function getFollowers(userId: number) {
+
+// Get followers
+export async function getFollowers(
+  userId: number
+) {
   return prisma.follow.findMany({
     where: {
       followingId: userId,
@@ -93,7 +126,11 @@ export async function getFollowers(userId: number) {
     },
   });
 }
-export async function getFollowing(userId: number) {
+
+// Get following
+export async function getFollowing(
+  userId: number
+) {
   return prisma.follow.findMany({
     where: {
       followerId: userId,
@@ -113,4 +150,22 @@ export async function getFollowing(userId: number) {
       createdAt: "desc",
     },
   });
+}
+// Check if a user is following another user
+export async function isFollowing(
+  followerId: number,
+  followingId: number
+) {
+  const follow = await prisma.follow.findUnique({
+    where: {
+      followerId_followingId: {
+        followerId: followerId,
+        followingId: followingId,
+      },
+    },
+  });
+
+  return {
+    following: !!follow,
+  };
 }

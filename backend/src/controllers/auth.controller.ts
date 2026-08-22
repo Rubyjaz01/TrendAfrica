@@ -34,7 +34,7 @@ export async function register(req: Request, res: Response) {
     });
   }
 }
-export async function login(req: Request, res: Response) {
+export async function login(req: Request, res: Response) {console.log("Login Request Body:", req.body);
   try {
     const data = loginSchema.parse(req.body);
 

@@ -84,6 +84,12 @@ export async function getCurrentUser(userId: number) {
       fullName: true,
       email: true,
       role: true,
+      username: true,
+      bio: true,
+      avatar: true,
+      coverImage: true,
+      location: true,
+      website: true,
       createdAt: true,
     },
   });

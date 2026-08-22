@@ -4,6 +4,7 @@ import {
   CreateCommentInput,
   UpdateCommentInput,
 } from "../validators/comment.validator";
+import { createNotification } from "./notification.service";
 
 // Create Comment
 export async function createComment(
@@ -20,7 +21,7 @@ export async function createComment(
     throw new AppError("Post not found", 404);
   }
 
-  return prisma.comment.create({
+  const comment = await prisma.comment.create({
     data: {
       content: data.content,
       userId,
@@ -37,10 +38,23 @@ export async function createComment(
       },
     },
   });
+
+  // Create notification for the post owner
+  await createNotification(
+    post.authorId,
+    userId,
+    "COMMENT",
+    "Someone commented on your post.",
+    postId
+  );
+
+  return comment;
 }
 
 // Get all comments for a post
-export async function getComments(postId: number) {
+export async function getComments(
+  postId: number
+) {
   return prisma.comment.findMany({
     where: {
       postId,
