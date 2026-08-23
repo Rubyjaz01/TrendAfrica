@@ -163,21 +163,25 @@ export async function deletePost(
 export async function getFeed(
   userId: number
 ) {
-  const following = await prisma.follow.findMany({
-    where: {
-      followerId: userId,
-    },
-    select: {
-      followingId: true,
-    },
-  });
+  const following =
+    await prisma.follow.findMany({
+      where: {
+        followerId: userId,
+      },
+      select: {
+        followingId: true,
+      },
+    });
 
-  const followingIds = following.map(
-    (follow) => follow.followingId
-  );
+  const followingIds: number[] =
+    following.map(
+      (follow) => follow.followingId
+    );
 
-  // If the user follows nobody,
-  // show the latest public posts.
+  /*
+   * If the user follows nobody,
+   * show the latest public posts.
+   */
   if (followingIds.length === 0) {
     return prisma.post.findMany({
       take: 20,
@@ -197,20 +201,24 @@ export async function getFeed(
     });
   }
 
-  // Include the current user's own posts
-  // together with posts from followed users.
+  /*
+   * Include the current user's own posts
+   * and posts from followed users.
+   */
   const feedAuthorIds = [
     userId,
     ...followingIds,
   ];
 
-  return prisma.post.findMany({
+  /*
+   * Get original posts.
+   */
+  const posts = await prisma.post.findMany({
     where: {
       authorId: {
         in: feedAuthorIds,
       },
     },
-    take: 20,
     include: {
       author: {
         select: {
@@ -225,4 +233,153 @@ export async function getFeed(
       createdAt: "desc",
     },
   });
+
+  /*
+   * Get reposts made by followed users.
+   */
+  const reposts = await prisma.repost.findMany({
+    where: {
+      userId: {
+        in: followingIds,
+      },
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          username: true,
+          avatar: true,
+        },
+      },
+      post: {
+        include: {
+          author: {
+            select: {
+              id: true,
+              fullName: true,
+              username: true,
+              avatar: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  type FeedUser = {
+    id: number;
+    fullName: string;
+    username: string | null;
+    avatar: string | null;
+  };
+
+  type FeedItem = {
+    id: number;
+    content: string;
+    image: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    authorId: number;
+
+    author: FeedUser;
+
+    feedType: "POST" | "REPOST";
+
+    repostedBy: FeedUser | null;
+
+    repostedAt: Date | null;
+  };
+
+  /*
+   * Store exactly ONE feed item
+   * for each unique post.
+   */
+  const feedMap = new Map<
+    number,
+    FeedItem
+  >();
+
+  /*
+   * Add original posts.
+   */
+  for (const post of posts) {
+    feedMap.set(post.id, {
+      ...post,
+      feedType: "POST",
+      repostedBy: null,
+      repostedAt: null,
+    });
+  }
+
+  /*
+   * Add reposts.
+   *
+   * If a repost is newer than the original
+   * feed event, replace the existing item.
+   */
+  for (const repost of reposts) {
+    const postId = repost.post.id;
+
+    const existing =
+      feedMap.get(postId);
+
+    const repostTime =
+      repost.createdAt.getTime();
+
+    if (!existing) {
+      feedMap.set(postId, {
+        ...repost.post,
+        feedType: "REPOST",
+        repostedBy: repost.user,
+        repostedAt: repost.createdAt,
+      });
+
+      continue;
+    }
+
+    const existingTime = new Date(
+      existing.repostedAt ||
+        existing.createdAt
+    ).getTime();
+
+    if (repostTime > existingTime) {
+      feedMap.set(postId, {
+        ...repost.post,
+        feedType: "REPOST",
+        repostedBy: repost.user,
+        repostedAt: repost.createdAt,
+      });
+    }
+  }
+
+  /*
+   * Convert the Map to an array.
+   */
+  const feedItems = Array.from(
+    feedMap.values()
+  );
+
+  /*
+   * Sort by the newest feed event.
+   */
+  feedItems.sort((a, b) => {
+    const dateA = new Date(
+      a.repostedAt || a.createdAt
+    ).getTime();
+
+    const dateB = new Date(
+      b.repostedAt || b.createdAt
+    ).getTime();
+
+    return dateB - dateA;
+  });
+
+  /*
+   * Return the 20 newest unique posts.
+   */
+  return feedItems.slice(0, 20);
 }

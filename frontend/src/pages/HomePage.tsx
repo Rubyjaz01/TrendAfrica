@@ -3,24 +3,36 @@ import CreatePost from "../components/CreatePost";
 import PostCard from "../components/PostCard";
 import { getFeed } from "../services/post.service";
 
-type Post = {
+type FeedUser = {
+  id: number;
+  fullName: string;
+  username: string | null;
+  avatar: string | null;
+};
+
+type FeedPost = {
   id: number;
   content: string;
   image: string | null;
   createdAt: string;
   updatedAt: string;
   authorId: number;
-  author: {
-    id: number;
-    fullName: string;
-    username: string | null;
-    avatar: string | null;
-  };
+  author: FeedUser;
+
+  feedType: "POST" | "REPOST";
+
+  repostedBy: FeedUser | null;
+  repostedAt: string | null;
 };
 
 export default function HomePage() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<FeedPost[]>(
+    []
+  );
+
+  const [loading, setLoading] =
+    useState(true);
+
   const [error, setError] = useState("");
 
   const loadPosts = useCallback(async () => {
@@ -30,7 +42,10 @@ export default function HomePage() {
 
       const response = await getFeed();
 
-      console.log("Feed response:", response);
+      console.log(
+        "Feed response:",
+        response
+      );
 
       setPosts(response.data);
     } catch (error) {
@@ -49,7 +64,9 @@ export default function HomePage() {
     loadPosts();
   }, [loadPosts]);
 
-  function handlePostDeleted(postId: number) {
+  function handlePostDeleted(
+    postId: number
+  ) {
     setPosts((currentPosts) =>
       currentPosts.filter(
         (post) => post.id !== postId
@@ -87,11 +104,28 @@ export default function HomePage() {
         </p>
       ) : (
         posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            onPostDeleted={handlePostDeleted}
-          />
+          <div key={`${post.feedType}-${post.id}-${post.repostedAt || post.createdAt}`}>
+            {post.feedType === "REPOST" &&
+              post.repostedBy && (
+                <div className="mb-2 flex items-center gap-2 px-2 text-sm text-gray-500">
+                  <span>🔄</span>
+
+                  <span>
+                    <strong className="text-gray-700">
+                      {post.repostedBy.fullName}
+                    </strong>{" "}
+                    reposted
+                  </span>
+                </div>
+              )}
+
+            <PostCard
+              post={post}
+              onPostDeleted={
+                handlePostDeleted
+              }
+            />
+          </div>
         ))
       )}
     </div>
