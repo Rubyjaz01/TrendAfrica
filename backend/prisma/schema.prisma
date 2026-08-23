@@ -14,16 +14,17 @@ model User {
   password String
   role     String @default("USER")
 
-  username String? @unique
-  bio      String?
+  username   String? @unique
+  bio        String?
   avatar     String?
-coverImage String?
-location   String?
-  website  String?
+  coverImage String?
+  location   String?
+  website    String?
 
   posts    Post[]
   likes    Like[]
   comments Comment[]
+  reposts  Repost[]
 
   following Follow[] @relation("Following")
   followers Follow[] @relation("Followers")
@@ -47,6 +48,7 @@ model Post {
 
   likes    Like[]
   comments Comment[]
+  reposts  Repost[]
 
   notifications Notification[]
 }
@@ -87,6 +89,18 @@ model Follow {
   createdAt DateTime @default(now())
 
   @@id([followerId, followingId])
+}
+
+model Repost {
+  userId Int
+  postId Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, postId])
 }
 
 model Notification {

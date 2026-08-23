@@ -15,6 +15,13 @@ import {
   deletePost,
 } from "../services/post.service";
 
+import {
+  repostPost,
+  unrepostPost,
+  checkRepost,
+  getRepostCount,
+} from "../services/repost.service";
+
 import { getCurrentUser } from "../services/profile.service";
 
 type Comment = {
@@ -84,10 +91,17 @@ export default function PostCard({
   const [deleting, setDeleting] =
     useState(false);
 
+  const [repostCount, setRepostCount] =
+    useState(0);
+  const [reposted, setReposted] = useState(false);
+  const [reposting, setReposting] =
+    useState(false);
+
   useEffect(() => {
     async function loadLikeCount() {
       try {
-        const response = await getLikeCount(post.id);
+        const response =
+          await getLikeCount(post.id);
 
         setLikeCount(response.data.count);
       } catch (error) {
@@ -102,9 +116,39 @@ export default function PostCard({
   }, [post.id]);
 
   useEffect(() => {
+    async function loadRepostData() {
+      try {
+        const [
+          countResponse,
+          statusResponse,
+        ] = await Promise.all([
+          getRepostCount(post.id),
+          checkRepost(post.id),
+        ]);
+
+        setRepostCount(
+          countResponse.data.count
+        );
+
+        setReposted(
+          statusResponse.data.reposted
+        );
+      } catch (error) {
+        console.error(
+          "Failed to load repost data:",
+          error
+        );
+      }
+    }
+
+    loadRepostData();
+  }, [post.id]);
+
+  useEffect(() => {
     async function loadCurrentUser() {
       try {
-        const response = await getCurrentUser();
+        const response =
+          await getCurrentUser();
 
         setCurrentUserId(response.data.id);
       } catch (error) {
@@ -120,7 +164,8 @@ export default function PostCard({
 
   async function loadComments() {
     try {
-      const response = await getComments(post.id);
+      const response =
+        await getComments(post.id);
 
       setComments(response.data);
     } catch (error) {
@@ -137,14 +182,18 @@ export default function PostCard({
     try {
       setLiking(true);
 
-      const response = await toggleLike(post.id);
+      const response =
+        await toggleLike(post.id);
 
       setLiked(response.data.liked);
 
       setLikeCount((currentCount) =>
         response.data.liked
           ? currentCount + 1
-          : Math.max(0, currentCount - 1)
+          : Math.max(
+              0,
+              currentCount - 1
+            )
       );
     } catch (error) {
       console.error(
@@ -153,6 +202,45 @@ export default function PostCard({
       );
     } finally {
       setLiking(false);
+    }
+  }
+
+  async function handleRepost() {
+    if (reposting) return;
+
+    try {
+      setReposting(true);
+
+      if (reposted) {
+        await unrepostPost(post.id);
+
+        setReposted(false);
+
+        setRepostCount((currentCount) =>
+          Math.max(0, currentCount - 1)
+        );
+      } else {
+        await repostPost(post.id);
+
+        setReposted(true);
+
+        setRepostCount(
+          (currentCount) =>
+            currentCount + 1
+        );
+      }
+    } catch (error: any) {
+      console.error(
+        "Failed to toggle repost:",
+        error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to update repost"
+      );
+    } finally {
+      setReposting(false);
     }
   }
 
@@ -171,7 +259,8 @@ export default function PostCard({
   ) {
     event.preventDefault();
 
-    const content = commentContent.trim();
+    const content =
+      commentContent.trim();
 
     if (!content) {
       setCommentError(
@@ -221,7 +310,8 @@ export default function PostCard({
   ) {
     event.preventDefault();
 
-    const content = editContent.trim();
+    const content =
+      editContent.trim();
 
     if (!content) {
       setEditError(
@@ -244,10 +334,12 @@ export default function PostCard({
       await updatePost(post.id, {
         content,
         image:
-          editImage.trim() || undefined,
+          editImage.trim() ||
+          undefined,
       });
 
       post.content = content;
+
       post.image =
         editImage.trim() || null;
 
@@ -268,9 +360,10 @@ export default function PostCard({
   }
 
   async function handleDelete() {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this post?"
-    );
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to delete this post?"
+      );
 
     if (!confirmed) return;
 
@@ -319,11 +412,15 @@ export default function PostCard({
             <button
               type="button"
               onClick={() =>
-                setEditing((current) => !current)
+                setEditing(
+                  (current) => !current
+                )
               }
               className="text-sm font-medium text-blue-600 hover:underline"
             >
-              {editing ? "Cancel" : "Edit"}
+              {editing
+                ? "Cancel"
+                : "Edit"}
             </button>
 
             <button
@@ -361,7 +458,9 @@ export default function PostCard({
             type="url"
             value={editImage}
             onChange={(event) =>
-              setEditImage(event.target.value)
+              setEditImage(
+                event.target.value
+              )
             }
             placeholder="Image URL (optional)"
             className="mt-2 w-full rounded-lg border p-3 focus:border-blue-500 focus:outline-none"
@@ -403,7 +502,7 @@ export default function PostCard({
         />
       )}
 
-      <div className="mt-4 flex items-center gap-4 border-t pt-3">
+      <div className="mt-4 flex flex-wrap items-center gap-4 border-t pt-3">
         <button
           type="button"
           onClick={handleLike}
@@ -414,7 +513,9 @@ export default function PostCard({
               : "text-gray-600"
           }`}
         >
-          {liked ? "♥ Liked" : "♡ Like"}
+          {liked
+            ? "❤️ Liked"
+            : "🤍 Like"}
         </button>
 
         <span className="text-sm text-gray-500">
@@ -431,6 +532,30 @@ export default function PostCard({
         >
           💬 Comments ({comments.length})
         </button>
+
+        <button
+          type="button"
+          onClick={handleRepost}
+          disabled={reposting}
+          className={`font-medium ${
+            reposted
+              ? "text-green-600"
+              : "text-gray-600"
+          } disabled:opacity-50`}
+        >
+          {reposting
+            ? "Reposting..."
+            : reposted
+            ? "🔄 Reposted"
+            : "🔄 Repost"}
+        </button>
+
+        <span className="text-sm text-gray-500">
+          {repostCount}{" "}
+          {repostCount === 1
+            ? "Repost"
+            : "Reposts"}
+        </span>
       </div>
 
       {showComments && (
@@ -441,37 +566,46 @@ export default function PostCard({
                 No comments yet.
               </p>
             ) : (
-              comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="rounded-lg bg-gray-50 p-3"
-                >
-                  <p className="font-medium">
-                    {comment.user.fullName}
-                  </p>
-
-                  {comment.user.username && (
-                    <p className="text-xs text-gray-500">
-                      @{comment.user.username}
+              comments.map(
+                (comment) => (
+                  <div
+                    key={comment.id}
+                    className="rounded-lg bg-gray-50 p-3"
+                  >
+                    <p className="font-medium">
+                      {comment.user.fullName}
                     </p>
-                  )}
 
-                  <p className="mt-1 text-sm text-gray-800">
-                    {comment.content}
-                  </p>
+                    {comment.user
+                      .username && (
+                      <p className="text-xs text-gray-500">
+                        @
+                        {
+                          comment.user
+                            .username
+                        }
+                      </p>
+                    )}
 
-                  <p className="mt-1 text-xs text-gray-400">
-                    {new Date(
-                      comment.createdAt
-                    ).toLocaleString()}
-                  </p>
-                </div>
-              ))
+                    <p className="mt-1 text-sm text-gray-800">
+                      {comment.content}
+                    </p>
+
+                    <p className="mt-1 text-xs text-gray-400">
+                      {new Date(
+                        comment.createdAt
+                      ).toLocaleString()}
+                    </p>
+                  </div>
+                )
+              )
             )}
           </div>
 
           <form
-            onSubmit={handleSubmitComment}
+            onSubmit={
+              handleSubmitComment
+            }
             className="mt-4"
           >
             <textarea
@@ -494,7 +628,9 @@ export default function PostCard({
 
               <button
                 type="submit"
-                disabled={commentLoading}
+                disabled={
+                  commentLoading
+                }
                 className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {commentLoading
