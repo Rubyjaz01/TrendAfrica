@@ -742,47 +742,157 @@ export async function getPersonalizedPosts(
   );
 
   /*
-   * ---------------------------------
-   * AUTHOR DIVERSITY
-   * ---------------------------------
-   *
-   * Prevent one creator from dominating
-   * the entire Explore page.
+   /*
+ * ---------------------------------
+ * CREATOR DIVERSITY
+ * ---------------------------------
+ *
+ * Prevent one creator from dominating
+ * the Explore page while preserving
+ * highly relevant recommendations.
+ *
+ * Strategy:
+ *
+ * 1. Always consider posts in score order.
+ * 2. Prefer a creator that has not appeared
+ *    recently in the selected feed.
+ * 3. Allow highly relevant creators to appear
+ *    again when necessary.
+ * 4. Never allow more than three posts from
+ *    the same creator.
+ */
+
+const selected: RecommendedPost[] = [];
+
+const authorCounts =
+  new Map<number, number>();
+
+/*
+ * Number of selections since the same
+ * author was last displayed.
+
+/*
+ * Maximum number of posts from one
+ * creator in a recommendation batch.
+ */
+const MAX_POSTS_PER_AUTHOR = 3;
+
+/*
+ * Minimum number of different creators
+ * we try to expose when enough candidates
+ * are available.
+ */
+const TARGET_UNIQUE_CREATORS =
+  Math.min(
+    safeLimit,
+    new Set(
+      ranked.map(
+        (post) => post.authorId
+      )
+    ).size
+  );
+
+/*
+ * First pass:
+ *
+ * Prefer creators that have not yet appeared.
+ */
+for (const post of ranked) {
+  if (
+    selected.length >= safeLimit
+  ) {
+    break;
+  }
+
+  const currentCount =
+    authorCounts.get(
+      post.authorId
+    ) || 0;
+
+  if (
+    currentCount >=
+    MAX_POSTS_PER_AUTHOR
+  ) {
+    continue;
+  }
+
+  /*
+   * During the diversity phase,
+   * prioritize creators that have not
+   * appeared in the selected feed yet.
    */
-  const selected: RecommendedPost[] =
-    [];
+  if (
+    selected.length <
+      TARGET_UNIQUE_CREATORS &&
+    currentCount > 0
+  ) {
+    continue;
+  }
 
-  const authorCounts =
-    new Map<number, number>();
+  selected.push(post);
 
-  for (const post of ranked) {
-    const currentCount =
-      authorCounts.get(
-        post.authorId
-      ) || 0;
+  authorCounts.set(
+    post.authorId,
+    currentCount + 1
+  );
+}
 
-    /*
-     * Maximum three posts per author
-     * in this recommendation batch.
-     */
-    if (currentCount >= 3) {
-      continue;
-    }
-
-    selected.push(post);
-
-    authorCounts.set(
-      post.authorId,
-      currentCount + 1
+/*
+ * Second pass:
+ *
+ * Fill any remaining positions using
+ * the highest-scoring eligible posts.
+ *
+ * This ensures strong recommendations
+ * are not permanently excluded.
+ */
+if (
+  selected.length <
+  safeLimit
+) {
+  const selectedIds =
+    new Set(
+      selected.map(
+        (post) => post.id
+      )
     );
 
+  for (const post of ranked) {
     if (
       selected.length >=
       safeLimit
     ) {
       break;
     }
+
+    if (
+      selectedIds.has(post.id)
+    ) {
+      continue;
+    }
+
+    const currentCount =
+      authorCounts.get(
+        post.authorId
+      ) || 0;
+
+    if (
+      currentCount >=
+      MAX_POSTS_PER_AUTHOR
+    ) {
+      continue;
+    }
+
+    selected.push(post);
+
+    selectedIds.add(post.id);
+
+    authorCounts.set(
+      post.authorId,
+      currentCount + 1
+    );
   }
+}
 
   /*
    * ---------------------------------
