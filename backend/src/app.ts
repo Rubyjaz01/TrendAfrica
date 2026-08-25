@@ -5,6 +5,9 @@ import morgan from "morgan";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 
+import trendingRoutes from "./routes/trending.routes";
+import exploreRoutes from "./routes/explore.routes";
+
 import authRoutes from "./routes/auth.routes";
 import postRoutes from "./routes/post.routes";
 import searchRoutes from "./routes/search.routes";
@@ -15,6 +18,7 @@ import userRoutes from "./routes/user.routes";
 import notificationRoutes from "./routes/notification.routes";
 import mediaRoutes from "./routes/media.routes";
 import repostRoutes from "./routes/repost.routes";
+import hashtagRoutes from "./routes/hashtag.routes";
 
 import { errorHandler } from "./middleware/error.middleware";
 
@@ -38,6 +42,12 @@ app.use("/api/posts", postRoutes);
 // Search
 app.use("/api", searchRoutes);
 
+// Trending
+app.use("/api", trendingRoutes);
+
+// Explore
+app.use("/api", exploreRoutes);
+
 // Likes
 app.use("/api/likes", likeRoutes);
 
@@ -52,6 +62,9 @@ app.use("/api/users", userRoutes);
 
 // Notifications
 app.use("/api", notificationRoutes);
+
+// Hashtags
+app.use("/api", hashtagRoutes);
 
 // Media
 app.use("/api/media", mediaRoutes);

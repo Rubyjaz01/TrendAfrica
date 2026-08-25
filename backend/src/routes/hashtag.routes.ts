@@ -1,26 +1,24 @@
 import { Router } from "express";
 
-import {
-  getMe,
-  getUser,
-} from "../controllers/user.controller";
-
 import { authenticate } from "../middleware/auth.middleware";
+
+import {
+  trending,
+  getByName,
+} from "../controllers/hashtag.controller";
 
 const router = Router();
 
-// Current authenticated user
 router.get(
-  "/me",
+  "/hashtags/trending",
   authenticate,
-  getMe
+  trending
 );
 
-// Specific user
 router.get(
-  "/:id",
+  "/hashtags/:name",
   authenticate,
-  getUser
+  getByName
 );
 
 export default router;

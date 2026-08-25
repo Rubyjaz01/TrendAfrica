@@ -7,27 +7,69 @@ import {
   CreatePostInput,
   UpdatePostInput,
 } from "../validators/post.validator";
+import { extractHashtags } from "../utils/hashtag";
 
 export async function createPost(
   authorId: number,
   data: CreatePostInput
 ) {
-  return prisma.post.create({
-    data: {
-      content: data.content,
-      image: data.image,
-      authorId,
-    },
-    include: {
-      author: {
-        select: {
-          id: true,
-          fullName: true,
-          username: true,
+  const hashtags = extractHashtags(
+    data.content
+  );
+
+  return prisma.$transaction(
+    async (tx) => {
+      const post = await tx.post.create({
+        data: {
+          content: data.content,
+          image: data.image,
+          authorId,
         },
-      },
-    },
-  });
+      });
+
+      if (hashtags.length > 0) {
+        for (const name of hashtags) {
+          const hashtag =
+            await tx.hashtag.upsert({
+              where: {
+                name,
+              },
+              update: {},
+              create: {
+                name,
+              },
+            });
+
+          await tx.postHashtag.create({
+            data: {
+              postId: post.id,
+              hashtagId: hashtag.id,
+            },
+          });
+        }
+      }
+
+      return tx.post.findUniqueOrThrow({
+        where: {
+          id: post.id,
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              fullName: true,
+              username: true,
+            },
+          },
+          hashtags: {
+            include: {
+              hashtag: true,
+            },
+          },
+        },
+      });
+    }
+  );
 }
 
 export async function getAllPosts(
@@ -49,6 +91,11 @@ export async function getAllPosts(
           fullName: true,
           username: true,
           avatar: true,
+        },
+      },
+      hashtags: {
+        include: {
+          hashtag: true,
         },
       },
     },
@@ -87,6 +134,11 @@ export async function getPostById(
           avatar: true,
         },
       },
+      hashtags: {
+        include: {
+          hashtag: true,
+        },
+      },
     },
   });
 }
@@ -110,25 +162,80 @@ export async function updatePost(
     throw new Error("Unauthorized");
   }
 
-  return prisma.post.update({
-    where: {
-      id,
-    },
-    data: {
-      content: data.content,
-      image: data.image,
-    },
-    include: {
-      author: {
-        select: {
-          id: true,
-          fullName: true,
-          username: true,
-          avatar: true,
+  const hashtags = extractHashtags(
+    data.content ?? ""
+  );
+
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.post.update({
+        where: {
+          id,
         },
-      },
-    },
-  });
+        data: {
+          content: data.content,
+          image: data.image,
+        },
+      });
+
+      /*
+       * Remove the post's previous hashtag
+       * relationships.
+       */
+      await tx.postHashtag.deleteMany({
+        where: {
+          postId: id,
+        },
+      });
+
+      /*
+       * Create the new hashtag relationships.
+       */
+      for (const name of hashtags) {
+        const hashtag =
+          await tx.hashtag.upsert({
+            where: {
+              name,
+            },
+            update: {},
+            create: {
+              name,
+            },
+          });
+
+        await tx.postHashtag.create({
+          data: {
+            postId: id,
+            hashtagId: hashtag.id,
+          },
+        });
+      }
+
+      /*
+       * Return the updated post.
+       */
+      return tx.post.findUniqueOrThrow({
+        where: {
+          id,
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              fullName: true,
+              username: true,
+              avatar: true,
+            },
+          },
+          hashtags: {
+            include: {
+              hashtag: true,
+            },
+          },
+        },
+      });
+    }
+  );
 }
 
 export async function deletePost(
@@ -194,6 +301,11 @@ export async function getFeed(
             avatar: true,
           },
         },
+        hashtags: {
+          include: {
+            hashtag: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -226,6 +338,11 @@ export async function getFeed(
           fullName: true,
           username: true,
           avatar: true,
+        },
+      },
+      hashtags: {
+        include: {
+          hashtag: true,
         },
       },
     },
@@ -262,6 +379,11 @@ export async function getFeed(
               avatar: true,
             },
           },
+          hashtags: {
+            include: {
+              hashtag: true,
+            },
+          },
         },
       },
     },
@@ -277,6 +399,14 @@ export async function getFeed(
     avatar: string | null;
   };
 
+  type FeedHashtag = {
+    hashtag: {
+      id: number;
+      name: string;
+      createdAt: Date;
+    };
+  };
+
   type FeedItem = {
     id: number;
     content: string;
@@ -286,6 +416,8 @@ export async function getFeed(
     authorId: number;
 
     author: FeedUser;
+
+    hashtags: FeedHashtag[];
 
     feedType: "POST" | "REPOST";
 

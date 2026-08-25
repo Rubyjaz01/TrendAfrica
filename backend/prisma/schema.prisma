@@ -49,6 +49,7 @@ model Post {
   likes    Like[]
   comments Comment[]
   reposts  Repost[]
+  hashtags PostHashtag[]
 
   notifications Notification[]
 }
@@ -101,6 +102,27 @@ model Repost {
   createdAt DateTime @default(now())
 
   @@id([userId, postId])
+}
+
+model Hashtag {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  posts PostHashtag[]
+}
+
+model PostHashtag {
+  postId    Int
+  hashtagId Int
+
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([postId, hashtagId])
+  @@index([hashtagId])
 }
 
 model Notification {

@@ -1,4 +1,8 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
 
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -9,12 +13,15 @@ import ProfilePage from "../pages/ProfilePage";
 import SearchPage from "../pages/SearchPage";
 import UserProfilePage from "../pages/UserProfilePage";
 import NotificationsPage from "../pages/NotificationsPage";
+import ExplorePage from "../pages/ExplorePage";
+import HashtagPage from "../pages/HashtagPage";
 
 import Navigation from "../components/Navigation";
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
+
       <Navigation />
 
       <Routes>
@@ -31,7 +38,7 @@ export default function AppRouter() {
           element={<RegisterPage />}
         />
 
-        {/* Protected Home Route */}
+        {/* Home */}
 
         <Route
           path="/"
@@ -42,7 +49,7 @@ export default function AppRouter() {
           }
         />
 
-        {/* Protected Profile Route */}
+        {/* Profile */}
 
         <Route
           path="/profile"
@@ -53,7 +60,7 @@ export default function AppRouter() {
           }
         />
 
-        {/* Protected Search Route */}
+        {/* Search */}
 
         <Route
           path="/search"
@@ -64,7 +71,29 @@ export default function AppRouter() {
           }
         />
 
-        {/* Protected Notifications Route */}
+        {/* Explore */}
+
+        <Route
+          path="/explore"
+          element={
+            <ProtectedRoute>
+              <ExplorePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Hashtag */}
+
+        <Route
+          path="/explore/hashtag/:name"
+          element={
+            <ProtectedRoute>
+              <HashtagPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Notifications */}
 
         <Route
           path="/notifications"
@@ -75,7 +104,7 @@ export default function AppRouter() {
           }
         />
 
-        {/* Protected User Profile Route */}
+        {/* User Profile */}
 
         <Route
           path="/users/:id"
@@ -94,6 +123,7 @@ export default function AppRouter() {
         />
 
       </Routes>
+
     </BrowserRouter>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import {
   getLikeCount,
@@ -31,6 +32,7 @@ type Comment = {
   updatedAt: string;
   userId: number;
   postId: number;
+
   user: {
     id: number;
     fullName: string;
@@ -44,6 +46,7 @@ type Post = {
   content: string;
   image: string | null;
   createdAt: string;
+
   author: {
     id: number;
     fullName: string;
@@ -57,34 +60,88 @@ type PostCardProps = {
   onPostDeleted?: (postId: number) => void;
 };
 
+/*
+ * Render post content while converting hashtags
+ * such as #Nigeria into clickable links.
+ */
+function renderPostContent(content: string) {
+  const parts = content.split(
+    /(#(?:[a-zA-Z0-9_]+))/g
+  );
+
+  return parts.map((part, index) => {
+    if (part.startsWith("#")) {
+      const hashtag = part
+        .slice(1)
+        .toLowerCase();
+
+      return (
+        <Link
+          key={`${hashtag}-${index}`}
+          to={`/explore/hashtag/${encodeURIComponent(
+            hashtag
+          )}`}
+          className="font-medium text-blue-600 hover:underline"
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+        >
+          {part}
+        </Link>
+      );
+    }
+
+    return (
+      <span key={index}>
+        {part}
+      </span>
+    );
+  });
+}
+
 export default function PostCard({
   post,
   onPostDeleted,
 }: PostCardProps) {
-  const [likeCount, setLikeCount] = useState(0);
-  const [liked, setLiked] = useState(false);
-  const [liking, setLiking] = useState(false);
+  const [likeCount, setLikeCount] =
+    useState(0);
 
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [liked, setLiked] =
+    useState(false);
+
+  const [liking, setLiking] =
+    useState(false);
+
+  const [comments, setComments] =
+    useState<Comment[]>([]);
+
   const [commentContent, setCommentContent] =
     useState("");
+
   const [commentLoading, setCommentLoading] =
     useState(false);
+
   const [commentError, setCommentError] =
     useState("");
+
   const [showComments, setShowComments] =
     useState(false);
 
   const [currentUserId, setCurrentUserId] =
     useState<number | null>(null);
 
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] =
+    useState(false);
+
   const [editContent, setEditContent] =
     useState(post.content);
+
   const [editImage, setEditImage] =
     useState(post.image || "");
+
   const [savingEdit, setSavingEdit] =
     useState(false);
+
   const [editError, setEditError] =
     useState("");
 
@@ -93,7 +150,10 @@ export default function PostCard({
 
   const [repostCount, setRepostCount] =
     useState(0);
-  const [reposted, setReposted] = useState(false);
+
+  const [reposted, setReposted] =
+    useState(false);
+
   const [reposting, setReposting] =
     useState(false);
 
@@ -103,7 +163,9 @@ export default function PostCard({
         const response =
           await getLikeCount(post.id);
 
-        setLikeCount(response.data.count);
+        setLikeCount(
+          response.data.count
+        );
       } catch (error) {
         console.error(
           "Failed to load like count:",
@@ -150,7 +212,9 @@ export default function PostCard({
         const response =
           await getCurrentUser();
 
-        setCurrentUserId(response.data.id);
+        setCurrentUserId(
+          response.data.id
+        );
       } catch (error) {
         console.error(
           "Failed to load current user:",
@@ -185,15 +249,18 @@ export default function PostCard({
       const response =
         await toggleLike(post.id);
 
-      setLiked(response.data.liked);
-
-      setLikeCount((currentCount) =>
+      setLiked(
         response.data.liked
-          ? currentCount + 1
-          : Math.max(
-              0,
-              currentCount - 1
-            )
+      );
+
+      setLikeCount(
+        (currentCount) =>
+          response.data.liked
+            ? currentCount + 1
+            : Math.max(
+                0,
+                currentCount - 1
+              )
       );
     } catch (error) {
       console.error(
@@ -216,8 +283,12 @@ export default function PostCard({
 
         setReposted(false);
 
-        setRepostCount((currentCount) =>
-          Math.max(0, currentCount - 1)
+        setRepostCount(
+          (currentCount) =>
+            Math.max(
+              0,
+              currentCount - 1
+            )
         );
       } else {
         await repostPost(post.id);
@@ -245,7 +316,8 @@ export default function PostCard({
   }
 
   async function handleShowComments() {
-    const nextState = !showComments;
+    const nextState =
+      !showComments;
 
     setShowComments(nextState);
 
@@ -266,6 +338,7 @@ export default function PostCard({
       setCommentError(
         "Comment cannot be empty"
       );
+
       return;
     }
 
@@ -273,6 +346,7 @@ export default function PostCard({
       setCommentError(
         "Comment cannot exceed 500 characters"
       );
+
       return;
     }
 
@@ -317,6 +391,7 @@ export default function PostCard({
       setEditError(
         "Post content is required"
       );
+
       return;
     }
 
@@ -324,6 +399,7 @@ export default function PostCard({
       setEditError(
         "Post cannot exceed 1000 characters"
       );
+
       return;
     }
 
@@ -331,12 +407,15 @@ export default function PostCard({
       setSavingEdit(true);
       setEditError("");
 
-      await updatePost(post.id, {
-        content,
-        image:
-          editImage.trim() ||
-          undefined,
-      });
+      await updatePost(
+        post.id,
+        {
+          content,
+          image:
+            editImage.trim() ||
+            undefined,
+        }
+      );
 
       post.content = content;
 
@@ -394,7 +473,11 @@ export default function PostCard({
 
   return (
     <article className="rounded-xl bg-white p-5 shadow">
+
+      {/* Author */}
+
       <div className="mb-3 flex items-start justify-between">
+
         <div>
           <p className="font-semibold">
             {post.author.fullName}
@@ -409,11 +492,13 @@ export default function PostCard({
 
         {isOwner && (
           <div className="flex gap-2">
+
             <button
               type="button"
               onClick={() =>
                 setEditing(
-                  (current) => !current
+                  (current) =>
+                    !current
                 )
               }
               className="text-sm font-medium text-blue-600 hover:underline"
@@ -433,15 +518,22 @@ export default function PostCard({
                 ? "Deleting..."
                 : "Delete"}
             </button>
+
           </div>
         )}
+
       </div>
+
+      {/* Edit */}
 
       {editing ? (
         <form
-          onSubmit={handleSaveEdit}
+          onSubmit={
+            handleSaveEdit
+          }
           className="mt-3"
         >
+
           <textarea
             value={editContent}
             onChange={(event) =>
@@ -467,6 +559,7 @@ export default function PostCard({
           />
 
           <div className="mt-2 flex items-center justify-between">
+
             <span className="text-xs text-gray-500">
               {editContent.length}/1000
             </span>
@@ -480,6 +573,7 @@ export default function PostCard({
                 ? "Saving..."
                 : "Save Changes"}
             </button>
+
           </div>
 
           {editError && (
@@ -487,12 +581,17 @@ export default function PostCard({
               {editError}
             </p>
           )}
+
         </form>
       ) : (
-        <p className="text-gray-800">
-          {post.content}
+        <p className="whitespace-pre-wrap text-gray-800">
+          {renderPostContent(
+            post.content
+          )}
         </p>
       )}
+
+      {/* Image */}
 
       {post.image && (
         <img
@@ -502,7 +601,10 @@ export default function PostCard({
         />
       )}
 
+      {/* Engagement */}
+
       <div className="mt-4 flex flex-wrap items-center gap-4 border-t pt-3">
+
         <button
           type="button"
           onClick={handleLike}
@@ -514,8 +616,8 @@ export default function PostCard({
           }`}
         >
           {liked
-            ? "❤️ Liked"
-            : "🤍 Like"}
+            ? "Liked"
+            : "Like"}
         </button>
 
         <span className="text-sm text-gray-500">
@@ -527,10 +629,12 @@ export default function PostCard({
 
         <button
           type="button"
-          onClick={handleShowComments}
+          onClick={
+            handleShowComments
+          }
           className="font-medium text-gray-600 hover:text-blue-600"
         >
-          💬 Comments ({comments.length})
+          Comments ({comments.length})
         </button>
 
         <button
@@ -546,8 +650,8 @@ export default function PostCard({
           {reposting
             ? "Reposting..."
             : reposted
-            ? "🔄 Reposted"
-            : "🔄 Repost"}
+            ? "Reposted"
+            : "Repost"}
         </button>
 
         <span className="text-sm text-gray-500">
@@ -556,11 +660,16 @@ export default function PostCard({
             ? "Repost"
             : "Reposts"}
         </span>
+
       </div>
+
+      {/* Comments */}
 
       {showComments && (
         <div className="mt-4 border-t pt-4">
+
           <div className="space-y-3">
+
             {comments.length === 0 ? (
               <p className="text-sm text-gray-500">
                 No comments yet.
@@ -572,8 +681,12 @@ export default function PostCard({
                     key={comment.id}
                     className="rounded-lg bg-gray-50 p-3"
                   >
+
                     <p className="font-medium">
-                      {comment.user.fullName}
+                      {
+                        comment.user
+                          .fullName
+                      }
                     </p>
 
                     {comment.user
@@ -596,10 +709,12 @@ export default function PostCard({
                         comment.createdAt
                       ).toLocaleString()}
                     </p>
+
                   </div>
                 )
               )
             )}
+
           </div>
 
           <form
@@ -608,6 +723,7 @@ export default function PostCard({
             }
             className="mt-4"
           >
+
             <textarea
               value={commentContent}
               onChange={(event) =>
@@ -622,6 +738,7 @@ export default function PostCard({
             />
 
             <div className="mt-1 flex items-center justify-between">
+
               <span className="text-xs text-gray-500">
                 {commentContent.length}/500
               </span>
@@ -637,6 +754,7 @@ export default function PostCard({
                   ? "Commenting..."
                   : "Comment"}
               </button>
+
             </div>
 
             {commentError && (
@@ -644,15 +762,20 @@ export default function PostCard({
                 {commentError}
               </p>
             )}
+
           </form>
+
         </div>
       )}
+
+      {/* Timestamp */}
 
       <p className="mt-3 text-xs text-gray-400">
         {new Date(
           post.createdAt
         ).toLocaleString()}
       </p>
+
     </article>
   );
 }
