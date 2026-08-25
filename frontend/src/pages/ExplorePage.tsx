@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 
 import { getExploreData } from "../services/explore.service";
 
-type TrendingPost = {
+type RecommendedPost = {
   id: number;
   content: string;
   image: string | null;
@@ -29,7 +29,8 @@ type TrendingPost = {
     reposts: number;
   };
 
-  trendingScore: number;
+  recommendationScore: number;
+  recommendationReasons: string[];
 };
 
 type TrendingHashtag = {
@@ -60,7 +61,7 @@ type SuggestedUser = {
 };
 
 type ExploreData = {
-  trendingPosts: TrendingPost[];
+  trendingPosts: RecommendedPost[];
   trendingHashtags: TrendingHashtag[];
   suggestedUsers: SuggestedUser[];
 };
@@ -112,9 +113,11 @@ export default function ExplorePage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl p-4">
-        <p className="text-center text-gray-500">
-          Loading Explore...
-        </p>
+        <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
+          <p className="text-gray-500">
+            Loading Explore...
+          </p>
+        </div>
       </div>
     );
   }
@@ -122,15 +125,15 @@ export default function ExplorePage() {
   if (error) {
     return (
       <div className="mx-auto max-w-6xl p-4">
-        <div className="rounded-xl bg-white p-6 text-center shadow">
-          <p className="text-red-600">
+        <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
+          <p className="font-medium text-red-600">
             {error}
           </p>
 
           <button
             type="button"
             onClick={loadExplore}
-            className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
           >
             Try Again
           </button>
@@ -142,7 +145,7 @@ export default function ExplorePage() {
   if (!data) {
     return (
       <div className="mx-auto max-w-6xl p-4">
-        <div className="rounded-xl bg-white p-6 text-center shadow">
+        <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
           <p className="text-gray-500">
             No Explore data available.
           </p>
@@ -152,45 +155,42 @@ export default function ExplorePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4">
-
+    <div className="mx-auto max-w-6xl space-y-8 p-4">
       {/* Header */}
 
-      <div>
-        <h1 className="text-3xl font-bold">
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           Explore
         </h1>
 
         <p className="mt-1 text-gray-500">
-          Discover what's happening across
+          Discover what is happening across
           TrendAfrica.
         </p>
-      </div>
+      </header>
 
-      {/* Trending Hashtags */}
+      {/* Trending Topics */}
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold">
-              Trending Topics
-            </h2>
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-gray-900">
+            Trending Topics
+          </h2>
 
-            <p className="text-sm text-gray-500">
-              What people are talking about
-            </p>
-          </div>
+          <p className="text-sm text-gray-500">
+            What people are talking about
+          </p>
         </div>
 
         {data.trendingHashtags.length ===
         0 ? (
-          <div className="rounded-xl bg-white p-6 shadow">
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
             <p className="text-gray-500">
               No trending topics yet.
             </p>
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.trendingHashtags.map(
               (hashtag, index) => (
                 <Link
@@ -198,54 +198,44 @@ export default function ExplorePage() {
                   to={`/explore/hashtag/${encodeURIComponent(
                     hashtag.name
                   )}`}
-                  className="rounded-xl bg-white p-5 shadow transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="group rounded-2xl bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                 >
                   <div className="flex items-start justify-between">
-
                     <div>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                         #{index + 1} Trending
                       </p>
 
-                      <h3 className="mt-1 text-lg font-bold text-blue-600">
-                        #
-                        {hashtag.name}
+                      <h3 className="mt-1 text-lg font-bold text-blue-600 group-hover:text-blue-700">
+                        #{hashtag.name}
                       </h3>
                     </div>
 
-                    <span className="text-xl">
+                    <span className="text-2xl">
                       #
                     </span>
-
                   </div>
 
                   <p className="mt-3 text-sm text-gray-500">
                     {hashtag.postCount}{" "}
-                    {hashtag.postCount ===
-                    1
+                    {hashtag.postCount === 1
                       ? "post"
                       : "posts"}
                   </p>
 
-                  <div className="mt-3 flex gap-4 text-xs text-gray-400">
+                  <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-400">
                     <span>
                       {hashtag.engagement.likes}{" "}
                       likes
                     </span>
 
                     <span>
-                      {
-                        hashtag.engagement
-                          .comments
-                      }{" "}
+                      {hashtag.engagement.comments}{" "}
                       comments
                     </span>
 
                     <span>
-                      {
-                        hashtag.engagement
-                          .reposts
-                      }{" "}
+                      {hashtag.engagement.reposts}{" "}
                       reposts
                     </span>
                   </div>
@@ -256,11 +246,11 @@ export default function ExplorePage() {
         )}
       </section>
 
-      {/* Suggested People */}
+      {/* People to Discover */}
 
       <section>
-        <div className="mb-3">
-          <h2 className="text-xl font-bold">
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-gray-900">
             People to Discover
           </h2>
 
@@ -271,22 +261,21 @@ export default function ExplorePage() {
 
         {data.suggestedUsers.length ===
         0 ? (
-          <div className="rounded-xl bg-white p-6 shadow">
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
             <p className="text-gray-500">
               No people to suggest yet.
             </p>
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.suggestedUsers.map(
               (user) => (
                 <Link
                   key={user.id}
                   to={`/users/${user.id}`}
-                  className="rounded-xl bg-white p-5 shadow transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="rounded-2xl bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                 >
                   <div className="flex items-center gap-3">
-
                     {user.avatar ? (
                       <img
                         src={user.avatar}
@@ -294,7 +283,7 @@ export default function ExplorePage() {
                         className="h-12 w-12 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 text-lg font-bold">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 text-lg font-bold text-gray-600">
                         {user.fullName
                           .charAt(0)
                           .toUpperCase()}
@@ -302,7 +291,7 @@ export default function ExplorePage() {
                     )}
 
                     <div className="min-w-0">
-                      <p className="truncate font-semibold">
+                      <p className="truncate font-semibold text-gray-900">
                         {user.fullName}
                       </p>
 
@@ -312,7 +301,6 @@ export default function ExplorePage() {
                         </p>
                       )}
                     </div>
-
                   </div>
 
                   {user.bio && (
@@ -321,16 +309,13 @@ export default function ExplorePage() {
                     </p>
                   )}
 
-                  <div className="mt-3 flex gap-4 text-xs text-gray-400">
+                  <div className="mt-4 flex gap-4 text-xs text-gray-400">
                     <span>
-                      {user.stats.posts}{" "}
-                      posts
+                      {user.stats.posts} posts
                     </span>
 
                     <span>
-                      {
-                        user.stats.followers
-                      }{" "}
+                      {user.stats.followers}{" "}
                       followers
                     </span>
                   </div>
@@ -341,87 +326,106 @@ export default function ExplorePage() {
         )}
       </section>
 
-      {/* Trending Posts */}
+      {/* Personalized Explore Feed */}
 
       <section>
-        <div className="mb-3">
-          <h2 className="text-xl font-bold">
-            Trending Posts
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-gray-900">
+            For You
           </h2>
 
           <p className="text-sm text-gray-500">
-            Posts gaining attention right now
+            Posts selected for you by
+            TrendAfrica.
           </p>
         </div>
 
         {data.trendingPosts.length ===
         0 ? (
-          <div className="rounded-xl bg-white p-6 shadow">
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
             <p className="text-gray-500">
-              No trending posts yet.
+              No recommendations available yet.
             </p>
           </div>
         ) : (
           <div className="space-y-4">
-
             {data.trendingPosts.map(
               (post, index) => (
                 <article
                   key={post.id}
-                  className="rounded-xl bg-white p-5 shadow"
+                  className="overflow-hidden rounded-2xl bg-white shadow-sm transition hover:shadow-md"
                 >
-
                   {/* Author */}
 
-                  <div className="flex items-center gap-3">
-
-                    {post.author.avatar ? (
-                      <img
-                        src={post.author.avatar}
-                        alt={
-                          post.author.fullName
-                        }
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 font-bold">
-                        {post.author.fullName
-                          .charAt(0)
-                          .toUpperCase()}
-                      </div>
-                    )}
-
-                    <div>
-                      <p className="font-semibold">
-                        {
-                          post.author
-                            .fullName
-                        }
-                      </p>
-
-                      {post.author
-                        .username && (
-                        <p className="text-sm text-gray-500">
-                          @
-                          {
-                            post.author
-                              .username
+                  <div className="flex items-center gap-3 p-5">
+                    <Link
+                      to={`/users/${post.author.id}`}
+                      className="shrink-0"
+                    >
+                      {post.author.avatar ? (
+                        <img
+                          src={post.author.avatar}
+                          alt={
+                            post.author.fullName
                           }
+                          className="h-11 w-11 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-200 font-bold text-gray-600">
+                          {post.author.fullName
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+                      )}
+                    </Link>
+
+                    <div className="min-w-0">
+                      <Link
+                        to={`/users/${post.author.id}`}
+                        className="font-semibold text-gray-900 hover:text-blue-600"
+                      >
+                        {post.author.fullName}
+                      </Link>
+
+                      {post.author.username && (
+                        <p className="text-sm text-gray-500">
+                          @{post.author.username}
                         </p>
                       )}
                     </div>
 
-                    <span className="ml-auto rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-600">
+                    <span className="ml-auto rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500">
                       #{index + 1}
                     </span>
-
                   </div>
+
+                  {/* Recommendation reason */}
+
+                  {post.recommendationReasons
+                    .length > 0 && (
+                    <div className="px-5 pb-3">
+                      <div className="inline-flex flex-wrap gap-2">
+                        {post.recommendationReasons.map(
+                          (reason) => (
+                            <span
+                              key={reason}
+                              className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600"
+                            >
+                              {reason}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Content */}
 
-                  <p className="mt-4 whitespace-pre-wrap text-gray-800">
-                    {post.content}
-                  </p>
+                  <div className="px-5 pb-5">
+                    <p className="whitespace-pre-wrap text-gray-800">
+                      {post.content}
+                    </p>
+                  </div>
 
                   {/* Image */}
 
@@ -429,63 +433,40 @@ export default function ExplorePage() {
                     <img
                       src={post.image}
                       alt="Post"
-                      className="mt-4 max-h-[500px] w-full rounded-lg object-cover"
+                      className="max-h-[600px] w-full object-cover"
                     />
                   )}
 
                   {/* Engagement */}
 
-                  <div className="mt-4 flex flex-wrap gap-5 border-t pt-3 text-sm text-gray-500">
-
+                  <div className="flex flex-wrap gap-5 border-t px-5 py-4 text-sm text-gray-500">
                     <span>
-                      ♥{" "}
-                      {
-                        post.engagement
-                          .likes
-                      }
+                      {post.engagement.likes}{" "}
+                      likes
                     </span>
 
                     <span>
-                      💬{" "}
-                      {
-                        post.engagement
-                          .comments
-                      }
+                      {post.engagement.comments}{" "}
+                      comments
                     </span>
 
                     <span>
-                      ↻{" "}
-                      {
-                        post.engagement
-                          .reposts
-                      }
+                      {post.engagement.reposts}{" "}
+                      reposts
                     </span>
 
-                    <span className="ml-auto font-semibold text-orange-500">
-                      Score{" "}
-                      {
-                        post.trendingScore
-                      }
+                    <span className="ml-auto text-xs text-gray-400">
+                      {new Date(
+                        post.createdAt
+                      ).toLocaleString()}
                     </span>
-
                   </div>
-
-                  {/* Timestamp */}
-
-                  <p className="mt-3 text-xs text-gray-400">
-                    {new Date(
-                      post.createdAt
-                    ).toLocaleString()}
-                  </p>
-
                 </article>
               )
             )}
-
           </div>
         )}
       </section>
-
     </div>
   );
 }
