@@ -1,58 +1,59 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import {
-  Link,
-  useParams,
-} from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 import FollowButton from "../components/FollowButton";
 import PostCard from "../components/PostCard";
 
 import {
   getUserById,
+  getUserStats,
+  getUserPosts,
   type PublicUser,
+  type UserStats,
+  type UserPost,
 } from "../services/user.service";
 
 export default function UserProfilePage() {
-  const { id } =
-    useParams<{ id: string }>();
+  const { id } = useParams<{
+    id: string;
+  }>();
 
   const [user, setUser] =
-    useState<PublicUser | null>(
-      null
-    );
+    useState<PublicUser | null>(null);
+
+  const [stats, setStats] =
+    useState<UserStats | null>(null);
+
+  const [posts, setPosts] =
+    useState<UserPost[]>([]);
 
   const [loading, setLoading] =
+    useState(true);
+
+  const [postsLoading, setPostsLoading] =
     useState(true);
 
   const [error, setError] =
     useState("");
 
+  const [postsError, setPostsError] =
+    useState("");
+
   useEffect(() => {
-    async function loadUser() {
+    async function loadProfile() {
       if (!id) {
-        setError(
-          "Invalid user ID"
-        );
+        setError("Invalid user ID");
         setLoading(false);
         return;
       }
 
-      const userId =
-        Number(id);
+      const userId = Number(id);
 
       if (
-        !Number.isInteger(
-          userId
-        ) ||
+        !Number.isInteger(userId) ||
         userId <= 0
       ) {
-        setError(
-          "Invalid user ID"
-        );
+        setError("Invalid user ID");
         setLoading(false);
         return;
       }
@@ -62,13 +63,9 @@ export default function UserProfilePage() {
         setError("");
 
         const response =
-          await getUserById(
-            userId
-          );
+          await getUserById(userId);
 
-        setUser(
-          response.data
-        );
+        setUser(response.data);
       } catch (error: any) {
         console.error(
           "Failed to load user:",
@@ -76,8 +73,7 @@ export default function UserProfilePage() {
         );
 
         setError(
-          error.response?.data
-            ?.message ||
+          error.response?.data?.message ||
             "Failed to load user profile"
         );
       } finally {
@@ -85,16 +81,89 @@ export default function UserProfilePage() {
       }
     }
 
-    loadUser();
+    loadProfile();
   }, [id]);
+
+  useEffect(() => {
+    async function loadProfileData() {
+      if (!id) {
+        return;
+      }
+
+      const userId = Number(id);
+
+      if (
+        !Number.isInteger(userId) ||
+        userId <= 0
+      ) {
+        return;
+      }
+
+      try {
+        setPostsLoading(true);
+        setPostsError("");
+
+        const [
+          statsResponse,
+          postsResponse,
+        ] = await Promise.all([
+          getUserStats(userId),
+          getUserPosts(userId),
+        ]);
+
+        setStats(statsResponse.data);
+        setPosts(postsResponse.data);
+      } catch (error: any) {
+        console.error(
+          "Failed to load profile data:",
+          error
+        );
+
+        setPostsError(
+          error.response?.data?.message ||
+            "Failed to load profile content"
+        );
+      } finally {
+        setPostsLoading(false);
+      }
+    }
+
+    loadProfileData();
+  }, [id]);
+
+  function handlePostDeleted(
+    postId: number
+  ) {
+    setPosts((currentPosts) =>
+      currentPosts.filter(
+        (post) => post.id !== postId
+      )
+    );
+
+    setStats((currentStats) =>
+      currentStats
+        ? {
+            ...currentStats,
+            posts: Math.max(
+              0,
+              currentStats.posts - 1
+            ),
+          }
+        : currentStats
+    );
+  }
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl p-4">
-        <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
-          <p className="text-gray-500">
-            Loading profile...
-          </p>
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-48 rounded-2xl bg-gray-200" />
+
+          <div className="-mt-12 ml-6 h-24 w-24 rounded-full border-4 border-white bg-gray-300" />
+
+          <div className="mt-5 h-6 w-48 rounded bg-gray-200" />
+
+          <div className="mt-3 h-4 w-32 rounded bg-gray-200" />
         </div>
       </div>
     );
@@ -102,236 +171,205 @@ export default function UserProfilePage() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-3xl p-4">
-        <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
-          <p className="font-medium text-red-600">
-            {error ||
-              "User not found"}
-          </p>
-
-          <Link
-            to="/explore"
-            className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-          >
-            Back to Explore
-          </Link>
-        </div>
+      <div className="mx-auto max-w-2xl px-4 py-12">
+        <p className="text-center text-red-600">
+          {error || "User not found"}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 p-4">
+    <main className="mx-auto max-w-4xl px-4 py-6">
+      {/* Profile Header */}
 
-      {/* Profile header */}
-
-      <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
-
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {/* Cover */}
 
-        <div className="h-48 bg-gray-200">
+        <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-cyan-500 sm:h-56">
           {user.coverImage ? (
             <img
-              src={
-                user.coverImage
-              }
-              alt=""
+              src={user.coverImage}
+              alt={`${user.fullName}'s cover`}
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full items-center justify-center bg-gradient-to-r from-gray-200 to-gray-300">
-              <span className="text-sm font-medium text-gray-500">
-                TrendAfrica
-              </span>
-            </div>
+            <>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.2),transparent_30%)]" />
+
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.15),transparent_30%)]" />
+
+              <div className="absolute bottom-0 left-0 h-px w-full bg-white/20" />
+            </>
           )}
         </div>
 
-        {/* Profile identity */}
+        {/* Profile content */}
 
-        <div className="px-6 pb-6">
-
-          <div className="-mt-14 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-
-            <div className="flex items-end gap-4">
-
+        <div className="px-5 pb-6 sm:px-7">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="-mt-12">
               {user.avatar ? (
                 <img
-                  src={
-                    user.avatar
-                  }
-                  alt={
-                    user.fullName
-                  }
-                  className="h-28 w-28 rounded-full border-4 border-white object-cover shadow"
+                  src={user.avatar}
+                  alt={user.fullName}
+                  className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-md sm:h-28 sm:w-28"
                 />
               ) : (
-                <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-white bg-gray-200 text-4xl font-bold text-gray-600 shadow">
+                <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-gray-200 text-3xl font-bold text-gray-600 shadow-md sm:h-28 sm:w-28">
                   {user.fullName
                     .charAt(0)
                     .toUpperCase()}
                 </div>
               )}
-
-              <div className="pb-1">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {
-                    user.fullName
-                  }
-                </h1>
-
-                {user.username && (
-                  <p className="text-gray-500">
-                    @
-                    {
-                      user.username
-                    }
-                  </p>
-                )}
-              </div>
             </div>
 
-            <FollowButton
-              userId={
-                user.id
-              }
-            />
+            <div className="sm:pb-1">
+              <FollowButton
+                userId={user.id}
+              />
+            </div>
+          </div>
+
+          {/* Identity */}
+
+          <div className="mt-4">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {user.fullName}
+            </h1>
+
+            {user.username && (
+              <p className="mt-1 text-sm text-gray-500">
+                @{user.username}
+              </p>
+            )}
           </div>
 
           {/* Bio */}
 
           {user.bio && (
-            <p className="mt-5 text-gray-700">
+            <p className="mt-4 max-w-2xl whitespace-pre-wrap text-gray-700">
               {user.bio}
             </p>
           )}
 
-          {/* Location / website */}
+          {/* Metadata */}
 
-          <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
-
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-500">
             {user.location && (
-              <span>
-                📍{" "}
-                {
-                  user.location
-                }
+              <span className="inline-flex items-center gap-1">
+                <span aria-hidden="true">
+                  📍
+                </span>
+                {user.location}
               </span>
             )}
 
             {user.website && (
               <a
-                href={
-                  user.website
-                }
+                href={user.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
+                className="inline-flex max-w-full items-center gap-1 truncate text-blue-600 hover:underline"
               >
-                🌐{" "}
-                {
-                  user.website
-                }
+                <span aria-hidden="true">
+                  🔗
+                </span>
+
+                <span className="truncate">
+                  {user.website}
+                </span>
               </a>
             )}
-
           </div>
 
           {/* Statistics */}
 
-          <div className="mt-6 flex flex-wrap gap-6 border-t pt-5">
-
+          <div className="mt-6 flex flex-wrap gap-7 border-t border-gray-100 pt-5">
             <div>
-              <p className="font-bold text-gray-900">
-                {
-                  user._count
-                    .posts
-                }
+              <p className="text-lg font-bold text-gray-900">
+                {stats?.posts ?? 0}
               </p>
 
-              <p className="text-sm text-gray-500">
+              <p className="text-xs uppercase tracking-wide text-gray-500">
                 Posts
               </p>
             </div>
 
-            <Link
-              to={`/users/${user.id}/followers`}
-              className="hover:underline"
-            >
-              <p className="font-bold text-gray-900">
-                {
-                  user._count
-                    .followers
-                }
+            <div>
+              <p className="text-lg font-bold text-gray-900">
+                {stats?.followers ?? 0}
               </p>
 
-              <p className="text-sm text-gray-500">
+              <p className="text-xs uppercase tracking-wide text-gray-500">
                 Followers
               </p>
-            </Link>
+            </div>
 
-            <Link
-              to={`/users/${user.id}/following`}
-              className="hover:underline"
-            >
-              <p className="font-bold text-gray-900">
-                {
-                  user._count
-                    .following
-                }
+            <div>
+              <p className="text-lg font-bold text-gray-900">
+                {stats?.following ?? 0}
               </p>
 
-              <p className="text-sm text-gray-500">
+              <p className="text-xs uppercase tracking-wide text-gray-500">
                 Following
               </p>
-            </Link>
-
+            </div>
           </div>
-
         </div>
       </section>
 
       {/* Posts */}
 
-      <section>
-
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-gray-900">
+      <section className="mt-6">
+        <div className="border-b border-gray-200 pb-3">
+          <h2 className="text-lg font-bold text-gray-900">
             Posts
           </h2>
-
-          <p className="text-sm text-gray-500">
-            Posts shared by{" "}
-            {
-              user.fullName
-            }
-          </p>
         </div>
 
-        {user.posts.length ===
-        0 ? (
-          <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
-            <p className="text-gray-500">
+        {postsError && (
+          <p className="mt-4 text-center text-sm text-red-600">
+            {postsError}
+          </p>
+        )}
+
+        {postsLoading ? (
+          <div className="mt-4 space-y-4">
+            <div className="h-40 animate-pulse rounded-xl bg-gray-200" />
+
+            <div className="h-40 animate-pulse rounded-xl bg-gray-200" />
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="mt-6 rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+            <p className="font-medium text-gray-700">
               No posts yet.
+            </p>
+
+            <p className="mt-1 text-sm text-gray-500">
+              This user hasn't published
+              anything yet.
             </p>
           </div>
         ) : (
-          <div className="space-y-5">
-            {user.posts.map(
-              (post) => (
-                <PostCard
-                  key={
-                    post.id
-                  }
-                  post={post}
-                />
-              )
-            )}
+          <div className="mt-4 space-y-4">
+            {posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={{
+                  ...post,
+                  feedType: "POST",
+                  repostedBy: null,
+                  repostedAt: null,
+                }}
+                onPostDeleted={
+                  handlePostDeleted
+                }
+              />
+            ))}
           </div>
         )}
-
       </section>
-
-    </div>
+    </main>
   );
 }
