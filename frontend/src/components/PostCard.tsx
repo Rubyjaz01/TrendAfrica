@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 
 import {
   getLikeCount,
@@ -57,51 +56,24 @@ type Post = {
 
 type PostCardProps = {
   post: Post;
-  onPostDeleted?: (postId: number) => void;
+
+  onPostDeleted?: (
+    postId: number
+  ) => void;
+
+  /*
+   * Optional recommendation metadata.
+   *
+   * Home feed does not need to provide this.
+   * Explore can provide it.
+   */
+  recommendationReasons?: string[];
 };
-
-/*
- * Render post content while converting hashtags
- * such as #Nigeria into clickable links.
- */
-function renderPostContent(content: string) {
-  const parts = content.split(
-    /(#(?:[a-zA-Z0-9_]+))/g
-  );
-
-  return parts.map((part, index) => {
-    if (part.startsWith("#")) {
-      const hashtag = part
-        .slice(1)
-        .toLowerCase();
-
-      return (
-        <Link
-          key={`${hashtag}-${index}`}
-          to={`/explore/hashtag/${encodeURIComponent(
-            hashtag
-          )}`}
-          className="font-medium text-blue-600 hover:underline"
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
-        >
-          {part}
-        </Link>
-      );
-    }
-
-    return (
-      <span key={index}>
-        {part}
-      </span>
-    );
-  });
-}
 
 export default function PostCard({
   post,
   onPostDeleted,
+  recommendationReasons = [],
 }: PostCardProps) {
   const [likeCount, setLikeCount] =
     useState(0);
@@ -157,6 +129,9 @@ export default function PostCard({
   const [reposting, setReposting] =
     useState(false);
 
+  /*
+   * Load like count.
+   */
   useEffect(() => {
     async function loadLikeCount() {
       try {
@@ -177,6 +152,10 @@ export default function PostCard({
     loadLikeCount();
   }, [post.id]);
 
+  /*
+   * Load repost count and current
+   * user's repost status.
+   */
   useEffect(() => {
     async function loadRepostData() {
       try {
@@ -206,6 +185,9 @@ export default function PostCard({
     loadRepostData();
   }, [post.id]);
 
+  /*
+   * Load current user.
+   */
   useEffect(() => {
     async function loadCurrentUser() {
       try {
@@ -226,6 +208,9 @@ export default function PostCard({
     loadCurrentUser();
   }, []);
 
+  /*
+   * Load comments.
+   */
   async function loadComments() {
     try {
       const response =
@@ -240,6 +225,9 @@ export default function PostCard({
     }
   }
 
+  /*
+   * Toggle like.
+   */
   async function handleLike() {
     if (liking) return;
 
@@ -272,6 +260,9 @@ export default function PostCard({
     }
   }
 
+  /*
+   * Toggle repost.
+   */
   async function handleRepost() {
     if (reposting) return;
 
@@ -279,7 +270,9 @@ export default function PostCard({
       setReposting(true);
 
       if (reposted) {
-        await unrepostPost(post.id);
+        await unrepostPost(
+          post.id
+        );
 
         setReposted(false);
 
@@ -291,7 +284,9 @@ export default function PostCard({
             )
         );
       } else {
-        await repostPost(post.id);
+        await repostPost(
+          post.id
+        );
 
         setReposted(true);
 
@@ -307,7 +302,8 @@ export default function PostCard({
       );
 
       alert(
-        error.response?.data?.message ||
+        error.response?.data
+          ?.message ||
           "Failed to update repost"
       );
     } finally {
@@ -315,17 +311,25 @@ export default function PostCard({
     }
   }
 
+  /*
+   * Show/hide comments.
+   */
   async function handleShowComments() {
     const nextState =
       !showComments;
 
-    setShowComments(nextState);
+    setShowComments(
+      nextState
+    );
 
     if (nextState) {
       await loadComments();
     }
   }
 
+  /*
+   * Submit comment.
+   */
   async function handleSubmitComment(
     event: React.FormEvent<HTMLFormElement>
   ) {
@@ -338,7 +342,6 @@ export default function PostCard({
       setCommentError(
         "Comment cannot be empty"
       );
-
       return;
     }
 
@@ -346,7 +349,6 @@ export default function PostCard({
       setCommentError(
         "Comment cannot exceed 500 characters"
       );
-
       return;
     }
 
@@ -371,7 +373,8 @@ export default function PostCard({
       );
 
       setCommentError(
-        error.response?.data?.message ||
+        error.response?.data
+          ?.message ||
           "Failed to create comment"
       );
     } finally {
@@ -379,6 +382,9 @@ export default function PostCard({
     }
   }
 
+  /*
+   * Save edited post.
+   */
   async function handleSaveEdit(
     event: React.FormEvent<HTMLFormElement>
   ) {
@@ -391,7 +397,6 @@ export default function PostCard({
       setEditError(
         "Post content is required"
       );
-
       return;
     }
 
@@ -399,7 +404,6 @@ export default function PostCard({
       setEditError(
         "Post cannot exceed 1000 characters"
       );
-
       return;
     }
 
@@ -417,10 +421,12 @@ export default function PostCard({
         }
       );
 
-      post.content = content;
+      post.content =
+        content;
 
       post.image =
-        editImage.trim() || null;
+        editImage.trim() ||
+        null;
 
       setEditing(false);
     } catch (error: any) {
@@ -430,7 +436,8 @@ export default function PostCard({
       );
 
       setEditError(
-        error.response?.data?.message ||
+        error.response?.data
+          ?.message ||
           "Failed to update post"
       );
     } finally {
@@ -438,6 +445,9 @@ export default function PostCard({
     }
   }
 
+  /*
+   * Delete post.
+   */
   async function handleDelete() {
     const confirmed =
       window.confirm(
@@ -449,9 +459,13 @@ export default function PostCard({
     try {
       setDeleting(true);
 
-      await deletePost(post.id);
+      await deletePost(
+        post.id
+      );
 
-      onPostDeleted?.(post.id);
+      onPostDeleted?.(
+        post.id
+      );
     } catch (error: any) {
       console.error(
         "Failed to delete post:",
@@ -459,7 +473,8 @@ export default function PostCard({
       );
 
       alert(
-        error.response?.data?.message ||
+        error.response?.data
+          ?.message ||
           "Failed to delete post"
       );
     } finally {
@@ -469,30 +484,51 @@ export default function PostCard({
 
   const isOwner =
     currentUserId !== null &&
-    currentUserId === post.author.id;
+    currentUserId ===
+      post.author.id;
 
   return (
-    <article className="rounded-xl bg-white p-5 shadow">
+    <article className="overflow-hidden rounded-2xl bg-white shadow-sm transition hover:shadow-md">
+      {/* Author header */}
 
-      {/* Author */}
-
-      <div className="mb-3 flex items-start justify-between">
-
-        <div>
-          <p className="font-semibold">
-            {post.author.fullName}
-          </p>
-
-          {post.author.username && (
-            <p className="text-sm text-gray-500">
-              @{post.author.username}
-            </p>
+      <div className="flex items-start justify-between p-5">
+        <div className="flex min-w-0 items-center gap-3">
+          {post.author.avatar ? (
+            <img
+              src={
+                post.author.avatar
+              }
+              alt={
+                post.author.fullName
+              }
+              className="h-11 w-11 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gray-200 font-bold text-gray-600">
+              {post.author.fullName
+                .charAt(0)
+                .toUpperCase()}
+            </div>
           )}
+
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-gray-900">
+              {post.author.fullName}
+            </p>
+
+            {post.author.username && (
+              <p className="truncate text-sm text-gray-500">
+                @
+                {
+                  post.author.username
+                }
+              </p>
+            )}
+          </div>
         </div>
 
         {isOwner && (
-          <div className="flex gap-2">
-
+          <div className="ml-3 flex shrink-0 gap-3">
             <button
               type="button"
               onClick={() =>
@@ -510,7 +546,9 @@ export default function PostCard({
 
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={
+                handleDelete
+              }
               disabled={deleting}
               className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50"
             >
@@ -518,24 +556,43 @@ export default function PostCard({
                 ? "Deleting..."
                 : "Delete"}
             </button>
-
           </div>
         )}
-
       </div>
 
-      {/* Edit */}
+      {/* Recommendation reasons */}
+
+      {recommendationReasons.length >
+        0 && (
+        <div className="px-5 pb-3">
+          <div className="flex flex-wrap gap-2">
+            {recommendationReasons.map(
+              (reason) => (
+                <span
+                  key={reason}
+                  className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+                >
+                  {reason}
+                </span>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Post content */}
 
       {editing ? (
         <form
           onSubmit={
             handleSaveEdit
           }
-          className="mt-3"
+          className="px-5 pb-5"
         >
-
           <textarea
-            value={editContent}
+            value={
+              editContent
+            }
             onChange={(event) =>
               setEditContent(
                 event.target.value
@@ -559,21 +616,24 @@ export default function PostCard({
           />
 
           <div className="mt-2 flex items-center justify-between">
-
             <span className="text-xs text-gray-500">
-              {editContent.length}/1000
+              {
+                editContent.length
+              }
+              /1000
             </span>
 
             <button
               type="submit"
-              disabled={savingEdit}
+              disabled={
+                savingEdit
+              }
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {savingEdit
                 ? "Saving..."
                 : "Save Changes"}
             </button>
-
           </div>
 
           {editError && (
@@ -581,14 +641,13 @@ export default function PostCard({
               {editError}
             </p>
           )}
-
         </form>
       ) : (
-        <p className="whitespace-pre-wrap text-gray-800">
-          {renderPostContent(
-            post.content
-          )}
-        </p>
+        <div className="px-5 pb-5">
+          <p className="whitespace-pre-wrap text-gray-800">
+            {post.content}
+          </p>
+        </div>
       )}
 
       {/* Image */}
@@ -597,22 +656,21 @@ export default function PostCard({
         <img
           src={post.image}
           alt="Post"
-          className="mt-4 w-full rounded-lg"
+          className="max-h-[600px] w-full object-cover"
         />
       )}
 
-      {/* Engagement */}
+      {/* Interaction bar */}
 
-      <div className="mt-4 flex flex-wrap items-center gap-4 border-t pt-3">
-
+      <div className="flex flex-wrap items-center gap-5 border-t px-5 py-4">
         <button
           type="button"
           onClick={handleLike}
           disabled={liking}
-          className={`font-medium ${
+          className={`font-medium transition ${
             liked
               ? "text-red-600"
-              : "text-gray-600"
+              : "text-gray-600 hover:text-red-600"
           }`}
         >
           {liked
@@ -634,17 +692,28 @@ export default function PostCard({
           }
           className="font-medium text-gray-600 hover:text-blue-600"
         >
-          Comments ({comments.length})
+          Comments
         </button>
+
+        <span className="text-sm text-gray-500">
+          {comments.length}{" "}
+          {comments.length === 1
+            ? "Comment"
+            : "Comments"}
+        </span>
 
         <button
           type="button"
-          onClick={handleRepost}
-          disabled={reposting}
-          className={`font-medium ${
+          onClick={
+            handleRepost
+          }
+          disabled={
+            reposting
+          }
+          className={`font-medium transition ${
             reposted
               ? "text-green-600"
-              : "text-gray-600"
+              : "text-gray-600 hover:text-green-600"
           } disabled:opacity-50`}
         >
           {reposting
@@ -660,17 +729,15 @@ export default function PostCard({
             ? "Repost"
             : "Reposts"}
         </span>
-
       </div>
 
       {/* Comments */}
 
       {showComments && (
-        <div className="mt-4 border-t pt-4">
-
+        <div className="border-t px-5 py-4">
           <div className="space-y-3">
-
-            {comments.length === 0 ? (
+            {comments.length ===
+            0 ? (
               <p className="text-sm text-gray-500">
                 No comments yet.
               </p>
@@ -678,11 +745,12 @@ export default function PostCard({
               comments.map(
                 (comment) => (
                   <div
-                    key={comment.id}
+                    key={
+                      comment.id
+                    }
                     className="rounded-lg bg-gray-50 p-3"
                   >
-
-                    <p className="font-medium">
+                    <p className="font-medium text-gray-900">
                       {
                         comment.user
                           .fullName
@@ -701,7 +769,9 @@ export default function PostCard({
                     )}
 
                     <p className="mt-1 text-sm text-gray-800">
-                      {comment.content}
+                      {
+                        comment.content
+                      }
                     </p>
 
                     <p className="mt-1 text-xs text-gray-400">
@@ -709,12 +779,10 @@ export default function PostCard({
                         comment.createdAt
                       ).toLocaleString()}
                     </p>
-
                   </div>
                 )
               )
             )}
-
           </div>
 
           <form
@@ -723,9 +791,10 @@ export default function PostCard({
             }
             className="mt-4"
           >
-
             <textarea
-              value={commentContent}
+              value={
+                commentContent
+              }
               onChange={(event) =>
                 setCommentContent(
                   event.target.value
@@ -738,9 +807,11 @@ export default function PostCard({
             />
 
             <div className="mt-1 flex items-center justify-between">
-
               <span className="text-xs text-gray-500">
-                {commentContent.length}/500
+                {
+                  commentContent.length
+                }
+                /500
               </span>
 
               <button
@@ -754,7 +825,6 @@ export default function PostCard({
                   ? "Commenting..."
                   : "Comment"}
               </button>
-
             </div>
 
             {commentError && (
@@ -762,20 +832,17 @@ export default function PostCard({
                 {commentError}
               </p>
             )}
-
           </form>
-
         </div>
       )}
 
       {/* Timestamp */}
 
-      <p className="mt-3 text-xs text-gray-400">
+      <p className="border-t px-5 py-3 text-xs text-gray-400">
         {new Date(
           post.createdAt
         ).toLocaleString()}
       </p>
-
     </article>
   );
 }

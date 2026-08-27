@@ -6,7 +6,11 @@ import {
 
 import { Link } from "react-router-dom";
 
-import { getExploreData } from "../services/explore.service";
+import PostCard from "../components/PostCard";
+
+import {
+  getExploreData,
+} from "../services/explore.service";
 
 type RecommendedPost = {
   id: number;
@@ -68,7 +72,9 @@ type ExploreData = {
 
 export default function ExplorePage() {
   const [data, setData] =
-    useState<ExploreData | null>(null);
+    useState<ExploreData | null>(
+      null
+    );
 
   const [loading, setLoading] =
     useState(true);
@@ -98,7 +104,8 @@ export default function ExplorePage() {
         );
 
         setError(
-          error?.response?.data?.message ||
+          error?.response?.data
+            ?.message ||
             "Failed to load Explore."
         );
       } finally {
@@ -109,6 +116,28 @@ export default function ExplorePage() {
   useEffect(() => {
     loadExplore();
   }, [loadExplore]);
+
+  function handlePostDeleted(
+    postId: number
+  ) {
+    setData(
+      (currentData) => {
+        if (!currentData) {
+          return currentData;
+        }
+
+        return {
+          ...currentData,
+
+          trendingPosts:
+            currentData.trendingPosts.filter(
+              (post) =>
+                post.id !== postId
+            ),
+        };
+      }
+    );
+  }
 
   if (loading) {
     return (
@@ -133,7 +162,7 @@ export default function ExplorePage() {
           <button
             type="button"
             onClick={loadExplore}
-            className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+            className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
           >
             Try Again
           </button>
@@ -164,8 +193,8 @@ export default function ExplorePage() {
         </h1>
 
         <p className="mt-1 text-gray-500">
-          Discover what is happening across
-          TrendAfrica.
+          Discover what is happening
+          across TrendAfrica.
         </p>
       </header>
 
@@ -182,8 +211,8 @@ export default function ExplorePage() {
           </p>
         </div>
 
-        {data.trendingHashtags.length ===
-        0 ? (
+        {data.trendingHashtags
+          .length === 0 ? (
           <div className="rounded-2xl bg-white p-6 shadow-sm">
             <p className="text-gray-500">
               No trending topics yet.
@@ -207,35 +236,55 @@ export default function ExplorePage() {
                       </p>
 
                       <h3 className="mt-1 text-lg font-bold text-blue-600 group-hover:text-blue-700">
-                        #{hashtag.name}
+                        #
+                        {
+                          hashtag.name
+                        }
                       </h3>
                     </div>
 
-                    <span className="text-2xl">
+                    <span className="text-2xl font-bold text-gray-300">
                       #
                     </span>
                   </div>
 
                   <p className="mt-3 text-sm text-gray-500">
-                    {hashtag.postCount}{" "}
-                    {hashtag.postCount === 1
-                      ? "post"
-                      : "posts"}
+                    {
+                      hashtag.postCount
+                    }{" "}
+                    {
+                      hashtag.postCount ===
+                      1
+                        ? "post"
+                        : "posts"
+                    }
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-400">
                     <span>
-                      {hashtag.engagement.likes}{" "}
+                      {
+                        hashtag
+                          .engagement
+                          .likes
+                      }{" "}
                       likes
                     </span>
 
                     <span>
-                      {hashtag.engagement.comments}{" "}
+                      {
+                        hashtag
+                          .engagement
+                          .comments
+                      }{" "}
                       comments
                     </span>
 
                     <span>
-                      {hashtag.engagement.reposts}{" "}
+                      {
+                        hashtag
+                          .engagement
+                          .reposts
+                      }{" "}
                       reposts
                     </span>
                   </div>
@@ -259,8 +308,8 @@ export default function ExplorePage() {
           </p>
         </div>
 
-        {data.suggestedUsers.length ===
-        0 ? (
+        {data.suggestedUsers
+          .length === 0 ? (
           <div className="rounded-2xl bg-white p-6 shadow-sm">
             <p className="text-gray-500">
               No people to suggest yet.
@@ -278,8 +327,12 @@ export default function ExplorePage() {
                   <div className="flex items-center gap-3">
                     {user.avatar ? (
                       <img
-                        src={user.avatar}
-                        alt={user.fullName}
+                        src={
+                          user.avatar
+                        }
+                        alt={
+                          user.fullName
+                        }
                         className="h-12 w-12 rounded-full object-cover"
                       />
                     ) : (
@@ -292,12 +345,17 @@ export default function ExplorePage() {
 
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-gray-900">
-                        {user.fullName}
+                        {
+                          user.fullName
+                        }
                       </p>
 
                       {user.username && (
                         <p className="truncate text-sm text-gray-500">
-                          @{user.username}
+                          @
+                          {
+                            user.username
+                          }
                         </p>
                       )}
                     </div>
@@ -311,11 +369,18 @@ export default function ExplorePage() {
 
                   <div className="mt-4 flex gap-4 text-xs text-gray-400">
                     <span>
-                      {user.stats.posts} posts
+                      {
+                        user.stats
+                          .posts
+                      }{" "}
+                      posts
                     </span>
 
                     <span>
-                      {user.stats.followers}{" "}
+                      {
+                        user.stats
+                          .followers
+                      }{" "}
                       followers
                     </span>
                   </div>
@@ -326,7 +391,7 @@ export default function ExplorePage() {
         )}
       </section>
 
-      {/* Personalized Explore Feed */}
+      {/* Personalized Feed */}
 
       <section>
         <div className="mb-4">
@@ -340,128 +405,28 @@ export default function ExplorePage() {
           </p>
         </div>
 
-        {data.trendingPosts.length ===
-        0 ? (
+        {data.trendingPosts
+          .length === 0 ? (
           <div className="rounded-2xl bg-white p-6 shadow-sm">
             <p className="text-gray-500">
-              No recommendations available yet.
+              No recommendations available
+              yet.
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {data.trendingPosts.map(
-              (post, index) => (
-                <article
+              (post) => (
+                <PostCard
                   key={post.id}
-                  className="overflow-hidden rounded-2xl bg-white shadow-sm transition hover:shadow-md"
-                >
-                  {/* Author */}
-
-                  <div className="flex items-center gap-3 p-5">
-                    <Link
-                      to={`/users/${post.author.id}`}
-                      className="shrink-0"
-                    >
-                      {post.author.avatar ? (
-                        <img
-                          src={post.author.avatar}
-                          alt={
-                            post.author.fullName
-                          }
-                          className="h-11 w-11 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-200 font-bold text-gray-600">
-                          {post.author.fullName
-                            .charAt(0)
-                            .toUpperCase()}
-                        </div>
-                      )}
-                    </Link>
-
-                    <div className="min-w-0">
-                      <Link
-                        to={`/users/${post.author.id}`}
-                        className="font-semibold text-gray-900 hover:text-blue-600"
-                      >
-                        {post.author.fullName}
-                      </Link>
-
-                      {post.author.username && (
-                        <p className="text-sm text-gray-500">
-                          @{post.author.username}
-                        </p>
-                      )}
-                    </div>
-
-                    <span className="ml-auto rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500">
-                      #{index + 1}
-                    </span>
-                  </div>
-
-                  {/* Recommendation reason */}
-
-                  {post.recommendationReasons
-                    .length > 0 && (
-                    <div className="px-5 pb-3">
-                      <div className="inline-flex flex-wrap gap-2">
-                        {post.recommendationReasons.map(
-                          (reason) => (
-                            <span
-                              key={reason}
-                              className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600"
-                            >
-                              {reason}
-                            </span>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Content */}
-
-                  <div className="px-5 pb-5">
-                    <p className="whitespace-pre-wrap text-gray-800">
-                      {post.content}
-                    </p>
-                  </div>
-
-                  {/* Image */}
-
-                  {post.image && (
-                    <img
-                      src={post.image}
-                      alt="Post"
-                      className="max-h-[600px] w-full object-cover"
-                    />
-                  )}
-
-                  {/* Engagement */}
-
-                  <div className="flex flex-wrap gap-5 border-t px-5 py-4 text-sm text-gray-500">
-                    <span>
-                      {post.engagement.likes}{" "}
-                      likes
-                    </span>
-
-                    <span>
-                      {post.engagement.comments}{" "}
-                      comments
-                    </span>
-
-                    <span>
-                      {post.engagement.reposts}{" "}
-                      reposts
-                    </span>
-
-                    <span className="ml-auto text-xs text-gray-400">
-                      {new Date(
-                        post.createdAt
-                      ).toLocaleString()}
-                    </span>
-                  </div>
-                </article>
+                  post={post}
+                  recommendationReasons={
+                    post.recommendationReasons
+                  }
+                  onPostDeleted={
+                    handlePostDeleted
+                  }
+                />
               )
             )}
           </div>
