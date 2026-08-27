@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import {
   Link,
+  useNavigate,
   useParams,
 } from "react-router-dom";
 
@@ -42,12 +43,17 @@ type FollowListType =
   | null;
 
 export default function UserProfilePage() {
+  const navigate = useNavigate();
+
   const { id } = useParams<{
     id: string;
   }>();
 
   const [user, setUser] =
     useState<PublicUser | null>(null);
+
+  const [currentUserId, setCurrentUserId] =
+    useState<number | null>(null);
 
   const [stats, setStats] =
     useState<UserStats | null>(null);
@@ -90,6 +96,35 @@ export default function UserProfilePage() {
 
   const [followListError, setFollowListError] =
     useState("");
+
+  /*
+   * Get currently logged-in user
+   */
+  useEffect(() => {
+    try {
+      const storedUser =
+        localStorage.getItem("user");
+
+      if (!storedUser) {
+        return;
+      }
+
+      const parsedUser =
+        JSON.parse(storedUser);
+
+      if (
+        parsedUser &&
+        Number.isInteger(parsedUser.id)
+      ) {
+        setCurrentUserId(parsedUser.id);
+      }
+    } catch (error) {
+      console.error(
+        "Failed to read logged-in user:",
+        error
+      );
+    }
+  }, []);
 
   /*
    * Load public user profile
@@ -286,6 +321,9 @@ export default function UserProfilePage() {
     }
   }
 
+  /*
+   * Close followers/following modal
+   */
   function closeFollowList() {
     setFollowListType(null);
     setFollowUsers([]);
@@ -293,8 +331,8 @@ export default function UserProfilePage() {
   }
 
   /*
-   * Update follower count when
-   * the profile owner is followed/unfollowed
+   * Update follower count after
+   * a successful follow/unfollow
    */
   function handleProfileFollowChange(
     following: boolean
@@ -315,7 +353,7 @@ export default function UserProfilePage() {
   }
 
   /*
-   * Remove deleted post from profile
+   * Remove deleted post
    */
   function handlePostDeleted(
     postId: number
@@ -340,7 +378,7 @@ export default function UserProfilePage() {
   }
 
   /*
-   * Render a post using the existing PostCard
+   * Render post
    */
   function renderPost(
     post: UserPost,
@@ -419,13 +457,15 @@ export default function UserProfilePage() {
       ? repostsLoading
       : postsLoading;
 
+  const isOwnProfile =
+    currentUserId !== null &&
+    currentUserId === user.id;
+
   return (
     <>
       <main className="mx-auto max-w-4xl px-4 py-6">
 
-        {/* =========================
-            PROFILE HEADER
-        ========================== */}
+        {/* PROFILE HEADER */}
 
         <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
 
@@ -473,15 +513,27 @@ export default function UserProfilePage() {
                 )}
               </div>
 
-              {/* Follow */}
+              {/* Profile Action */}
 
               <div className="sm:pb-1">
-                <FollowButton
-                  userId={user.id}
-                  onFollowChange={
-                    handleProfileFollowChange
-                  }
-                />
+                {isOwnProfile ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate("/profile")
+                    }
+                    className="rounded-lg bg-gray-200 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-300"
+                  >
+                    Edit Profile
+                  </button>
+                ) : (
+                  <FollowButton
+                    userId={user.id}
+                    onFollowChange={
+                      handleProfileFollowChange
+                    }
+                  />
+                )}
               </div>
             </div>
 
@@ -594,14 +646,11 @@ export default function UserProfilePage() {
                   Following
                 </p>
               </button>
-
             </div>
           </div>
         </section>
 
-        {/* =========================
-            PROFILE TABS
-        ========================== */}
+        {/* PROFILE TABS */}
 
         <section className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
 
@@ -666,13 +715,10 @@ export default function UserProfilePage() {
                 <span className="absolute bottom-0 left-0 h-0.5 w-full bg-blue-600" />
               )}
             </button>
-
           </div>
         </section>
 
-        {/* =========================
-            TAB CONTENT
-        ========================== */}
+        {/* TAB CONTENT */}
 
         <section className="mt-4">
 
@@ -714,7 +760,6 @@ export default function UserProfilePage() {
                       ? "This user hasn't shared any images yet."
                       : "This user hasn't reposted anything yet."}
                   </p>
-
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -735,16 +780,13 @@ export default function UserProfilePage() {
         </section>
       </main>
 
-      {/* =========================
-          FOLLOWERS / FOLLOWING MODAL
-      ========================== */}
+      {/* FOLLOWERS / FOLLOWING MODAL */}
 
       {followListType && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6"
           onClick={closeFollowList}
         >
-
           <div
             className="flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
             onClick={(event) =>
@@ -771,7 +813,6 @@ export default function UserProfilePage() {
               >
                 ×
               </button>
-
             </div>
 
             {/* Modal Content */}
@@ -882,7 +923,6 @@ export default function UserProfilePage() {
                               }
                             </p>
                           )}
-
                         </div>
 
                         {/* Follow button */}
@@ -892,14 +932,12 @@ export default function UserProfilePage() {
                             followUser.id
                           }
                         />
-
                       </div>
                     )
                   )}
 
                 </div>
               )}
-
             </div>
           </div>
         </div>
