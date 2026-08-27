@@ -1,99 +1,120 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
-import { useForm } from "react-hook-form";
-import { login } from "../services/auth.service";
-type LoginForm = {
-  email: string;
-  password: string;
-};
-import { useNavigate } from "react-router-dom";
+import AuthBackground from "../components/auth/AuthBackground";
+import InteractiveIdentityCard from "../components/auth/InteractiveIdentityCard";
+import LoginForm from "../components/auth/LoginForm";
+
 export default function LoginPage() {
-  const {
-    register,
-    handleSubmit,
-  } = useForm<LoginForm>();
-  const navigate = useNavigate();
+  const [identity, setIdentity] =
+    useState("");
 
-  async function onSubmit(data: LoginForm) {
-  try {
-    console.log("Sending:", data);
+  const identityName =
+    identity.trim() ||
+    "TrendAfrica";
 
-const response = await login(data);
-
-console.log("Response:", response);
-
-localStorage.setItem("token", response.data.token);
-
-localStorage.setItem(
-  "user",
-  JSON.stringify(response.data.user)
-);
-
-alert("Login successful!");
-
-// Save JWT
-localStorage.setItem("token", response.data.token);
-
-// Save logged-in user
-localStorage.setItem(
-  "user",
-  JSON.stringify(response.data.user)
-);
-
-navigate("/");
-  } catch (error: any) {
-    console.error(error);
-
-    alert(
-      error.response?.data?.message || "Login failed"
-    );
-  }
-}
+  const identityUsername =
+    identity.includes("@")
+      ? identity
+          .split("@")[0]
+          .trim() || "your identity"
+      : "your identity";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
-        <h1 className="mb-6 text-center text-3xl font-bold text-blue-600">
-          TrendAfrica
-        </h1>
+    <AuthBackground>
+      <main className="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+        <div className="w-full max-w-6xl">
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4"
-        >
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Email
-            </label>
+          {/* Brand */}
 
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="w-full rounded-lg border p-3 focus:border-blue-500 focus:outline-none"
-              {...register("email")}
-            />
+          <div className="mb-8 text-center lg:hidden">
+            <Link
+              to="/login"
+              className="inline-block text-2xl font-black tracking-tight text-white"
+            >
+              TREND<span className="text-blue-400">AFRICA</span>
+            </Link>
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Password
-            </label>
+          {/* Main layout */}
 
-            <input
-              type="password"
-              placeholder="Enter your password"
-              className="w-full rounded-lg border p-3 focus:border-blue-500 focus:outline-none"
-              {...register("password")}
-            />
+          <div className="grid items-center gap-8 lg:grid-cols-[1fr_460px] lg:gap-14">
+
+            {/* Identity section */}
+
+            <section className="hidden lg:block">
+              <div className="mb-6 max-w-md">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-blue-400">
+                  Africa's digital community
+                </p>
+
+                <h1 className="text-4xl font-black tracking-tight text-white xl:text-5xl">
+                  Your identity.
+                  <br />
+                  Your voice.
+                  <br />
+                  <span className="text-blue-400">
+                    Your Africa.
+                  </span>
+                </h1>
+
+                <p className="mt-5 max-w-lg text-base leading-7 text-slate-400">
+                  Connect with people,
+                  discover conversations,
+                  and stay close to what
+                  Africa is talking about.
+                </p>
+              </div>
+
+              <InteractiveIdentityCard
+                fullName={
+                  identityName
+                }
+                username={
+                  identityUsername
+                }
+              />
+            </section>
+
+            {/* Login section */}
+
+            <section className="w-full">
+              <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+
+                {/* Mobile card */}
+
+                <div className="mb-8 lg:hidden">
+                  <InteractiveIdentityCard
+                    fullName={
+                      identityName
+                    }
+                    username={
+                      identityUsername
+                    }
+                  />
+                </div>
+
+                <LoginForm
+                  onIdentityChange={
+                    setIdentity
+                  }
+                />
+
+              </div>
+            </section>
+
           </div>
 
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700"
-          >
-            Login
-          </button>
-        </form>
-      </div>
-    </div>
+          {/* Footer */}
+
+          <footer className="mt-8 text-center">
+            <p className="text-xs text-slate-600">
+              © {new Date().getFullYear()} TrendAfrica
+            </p>
+          </footer>
+
+        </div>
+      </main>
+    </AuthBackground>
   );
 }
