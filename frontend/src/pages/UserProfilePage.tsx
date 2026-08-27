@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   Link,
   useParams,
@@ -90,6 +91,9 @@ export default function UserProfilePage() {
   const [followListError, setFollowListError] =
     useState("");
 
+  /*
+   * Load public user profile
+   */
   useEffect(() => {
     async function loadProfile() {
       if (!id) {
@@ -135,6 +139,9 @@ export default function UserProfilePage() {
     loadProfile();
   }, [id]);
 
+  /*
+   * Load profile statistics and posts
+   */
   useEffect(() => {
     async function loadProfilePosts() {
       if (!id) {
@@ -182,6 +189,9 @@ export default function UserProfilePage() {
     loadProfilePosts();
   }, [id]);
 
+  /*
+   * Load reposts only when Reposts tab is opened
+   */
   useEffect(() => {
     async function loadProfileReposts() {
       if (
@@ -231,6 +241,9 @@ export default function UserProfilePage() {
     reposts.length,
   ]);
 
+  /*
+   * Load followers/following modal
+   */
   async function openFollowList(
     type: "followers" | "following"
   ) {
@@ -279,6 +292,31 @@ export default function UserProfilePage() {
     setFollowListError("");
   }
 
+  /*
+   * Update follower count when
+   * the profile owner is followed/unfollowed
+   */
+  function handleProfileFollowChange(
+    following: boolean
+  ) {
+    setStats((currentStats) =>
+      currentStats
+        ? {
+            ...currentStats,
+            followers: following
+              ? currentStats.followers + 1
+              : Math.max(
+                  0,
+                  currentStats.followers - 1
+                ),
+          }
+        : currentStats
+    );
+  }
+
+  /*
+   * Remove deleted post from profile
+   */
   function handlePostDeleted(
     postId: number
   ) {
@@ -301,6 +339,9 @@ export default function UserProfilePage() {
     );
   }
 
+  /*
+   * Render a post using the existing PostCard
+   */
   function renderPost(
     post: UserPost,
     allowDelete: boolean
@@ -324,6 +365,9 @@ export default function UserProfilePage() {
     );
   }
 
+  /*
+   * Loading state
+   */
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
@@ -340,6 +384,9 @@ export default function UserProfilePage() {
     );
   }
 
+  /*
+   * User not found
+   */
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12">
@@ -375,9 +422,13 @@ export default function UserProfilePage() {
   return (
     <>
       <main className="mx-auto max-w-4xl px-4 py-6">
-        {/* Profile Header */}
+
+        {/* =========================
+            PROFILE HEADER
+        ========================== */}
 
         <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+
           {/* Cover */}
 
           <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-cyan-500 sm:h-56">
@@ -398,10 +449,14 @@ export default function UserProfilePage() {
             )}
           </div>
 
-          {/* Profile Content */}
+          {/* Profile content */}
 
           <div className="px-5 pb-6 sm:px-7">
+
             <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+
+              {/* Avatar */}
+
               <div className="-mt-12">
                 {user.avatar ? (
                   <img
@@ -418,9 +473,14 @@ export default function UserProfilePage() {
                 )}
               </div>
 
+              {/* Follow */}
+
               <div className="sm:pb-1">
                 <FollowButton
                   userId={user.id}
+                  onFollowChange={
+                    handleProfileFollowChange
+                  }
                 />
               </div>
             </div>
@@ -450,6 +510,7 @@ export default function UserProfilePage() {
             {/* Metadata */}
 
             <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-500">
+
               {user.location && (
                 <span className="inline-flex items-center gap-1">
                   <span aria-hidden="true">
@@ -481,6 +542,9 @@ export default function UserProfilePage() {
             {/* Statistics */}
 
             <div className="mt-6 flex flex-wrap gap-7 border-t border-gray-100 pt-5">
+
+              {/* Posts */}
+
               <div>
                 <p className="text-lg font-bold text-gray-900">
                   {stats?.posts ?? 0}
@@ -490,6 +554,8 @@ export default function UserProfilePage() {
                   Posts
                 </p>
               </div>
+
+              {/* Followers */}
 
               <button
                 type="button"
@@ -509,6 +575,8 @@ export default function UserProfilePage() {
                 </p>
               </button>
 
+              {/* Following */}
+
               <button
                 type="button"
                 onClick={() =>
@@ -526,14 +594,21 @@ export default function UserProfilePage() {
                   Following
                 </p>
               </button>
+
             </div>
           </div>
         </section>
 
-        {/* Profile Tabs */}
+        {/* =========================
+            PROFILE TABS
+        ========================== */}
 
         <section className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
+
           <div className="grid grid-cols-3 border-b border-gray-200">
+
+            {/* Posts */}
+
             <button
               type="button"
               onClick={() =>
@@ -551,6 +626,8 @@ export default function UserProfilePage() {
                 <span className="absolute bottom-0 left-0 h-0.5 w-full bg-blue-600" />
               )}
             </button>
+
+            {/* Media */}
 
             <button
               type="button"
@@ -570,6 +647,8 @@ export default function UserProfilePage() {
               )}
             </button>
 
+            {/* Reposts */}
+
             <button
               type="button"
               onClick={() =>
@@ -587,12 +666,16 @@ export default function UserProfilePage() {
                 <span className="absolute bottom-0 left-0 h-0.5 w-full bg-blue-600" />
               )}
             </button>
+
           </div>
         </section>
 
-        {/* Tab Content */}
+        {/* =========================
+            TAB CONTENT
+        ========================== */}
 
         <section className="mt-4">
+
           {visibleError && (
             <p className="mb-4 text-center text-sm text-red-600">
               {visibleError}
@@ -601,14 +684,17 @@ export default function UserProfilePage() {
 
           {visibleLoading ? (
             <div className="space-y-4">
+
               <div className="h-40 animate-pulse rounded-xl bg-gray-200" />
 
               <div className="h-40 animate-pulse rounded-xl bg-gray-200" />
+
             </div>
           ) : (
             <>
               {visiblePosts.length === 0 ? (
                 <div className="mt-6 rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+
                   <p className="font-medium text-gray-700">
                     {activeTab ===
                     "posts"
@@ -628,9 +714,11 @@ export default function UserProfilePage() {
                       ? "This user hasn't shared any images yet."
                       : "This user hasn't reposted anything yet."}
                   </p>
+
                 </div>
               ) : (
                 <div className="space-y-4">
+
                   {visiblePosts.map(
                     (post) =>
                       renderPost(
@@ -639,6 +727,7 @@ export default function UserProfilePage() {
                           "reposts"
                       )
                   )}
+
                 </div>
               )}
             </>
@@ -646,22 +735,27 @@ export default function UserProfilePage() {
         </section>
       </main>
 
-      {/* Followers / Following Modal */}
+      {/* =========================
+          FOLLOWERS / FOLLOWING MODAL
+      ========================== */}
 
       {followListType && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6"
           onClick={closeFollowList}
         >
+
           <div
             className="flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
             onClick={(event) =>
               event.stopPropagation()
             }
           >
+
             {/* Modal Header */}
 
             <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+
               <h2 className="text-lg font-bold text-gray-900">
                 {followListType ===
                 "followers"
@@ -677,35 +771,46 @@ export default function UserProfilePage() {
               >
                 ×
               </button>
+
             </div>
 
             {/* Modal Content */}
 
             <div className="overflow-y-auto">
+
               {followListLoading ? (
                 <div className="space-y-4 p-5">
+
                   <div className="h-16 animate-pulse rounded-xl bg-gray-100" />
+
                   <div className="h-16 animate-pulse rounded-xl bg-gray-100" />
+
                   <div className="h-16 animate-pulse rounded-xl bg-gray-100" />
+
                 </div>
               ) : followListError ? (
                 <div className="p-8 text-center">
+
                   <p className="text-sm text-red-600">
                     {followListError}
                   </p>
+
                 </div>
               ) : followUsers.length ===
                 0 ? (
                 <div className="p-10 text-center">
+
                   <p className="font-medium text-gray-700">
                     {followListType ===
                     "followers"
                       ? "No followers yet."
                       : "Not following anyone yet."}
                   </p>
+
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
+
                   {followUsers.map(
                     (followUser) => (
                       <div
@@ -714,6 +819,9 @@ export default function UserProfilePage() {
                         }
                         className="flex items-center gap-3 px-5 py-4 transition hover:bg-gray-50"
                       >
+
+                        {/* Avatar */}
+
                         <Link
                           to={`/users/${followUser.id}`}
                           onClick={
@@ -742,7 +850,10 @@ export default function UserProfilePage() {
                           )}
                         </Link>
 
+                        {/* User information */}
+
                         <div className="min-w-0 flex-1">
+
                           <Link
                             to={`/users/${followUser.id}`}
                             onClick={
@@ -771,18 +882,24 @@ export default function UserProfilePage() {
                               }
                             </p>
                           )}
+
                         </div>
+
+                        {/* Follow button */}
 
                         <FollowButton
                           userId={
                             followUser.id
                           }
                         />
+
                       </div>
                     )
                   )}
+
                 </div>
               )}
+
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   followUser,
   unfollowUser,
@@ -7,16 +8,27 @@ import {
 
 type FollowButtonProps = {
   userId: number;
+  onFollowChange?: (
+    following: boolean
+  ) => void;
 };
 
 export default function FollowButton({
   userId,
+  onFollowChange,
 }: FollowButtonProps) {
-  const [following, setFollowing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [following, setFollowing] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadFollowStatus() {
       try {
         setLoading(true);
@@ -25,10 +37,18 @@ export default function FollowButton({
         const response =
           await checkFollowing(userId);
 
+        if (cancelled) {
+          return;
+        }
+
         setFollowing(
-          response.data.following
+          Boolean(response.data.following)
         );
       } catch (error: any) {
+        if (cancelled) {
+          return;
+        }
+
         console.error(
           "Failed to check follow status:",
           error
@@ -39,27 +59,42 @@ export default function FollowButton({
             "Failed to check follow status"
         );
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
     loadFollowStatus();
+
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   async function handleToggleFollow() {
-    if (loading) return;
+    if (loading) {
+      return;
+    }
+
+    const nextFollowing =
+      !following;
 
     try {
       setLoading(true);
       setError("");
 
-      if (following) {
-        await unfollowUser(userId);
-        setFollowing(false);
-      } else {
+      if (nextFollowing) {
         await followUser(userId);
-        setFollowing(true);
+      } else {
+        await unfollowUser(userId);
       }
+
+      setFollowing(nextFollowing);
+
+      onFollowChange?.(
+        nextFollowing
+      );
     } catch (error: any) {
       console.error(
         "Failed to update follow status:",
@@ -81,11 +116,11 @@ export default function FollowButton({
         type="button"
         onClick={handleToggleFollow}
         disabled={loading}
-        className={`rounded-lg px-4 py-2 font-semibold ${
+        className={`rounded-lg px-4 py-2 font-semibold transition ${
           following
             ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
             : "bg-blue-600 text-white hover:bg-blue-700"
-        } disabled:opacity-50`}
+        } disabled:cursor-not-allowed disabled:opacity-50`}
       >
         {loading
           ? "Loading..."
