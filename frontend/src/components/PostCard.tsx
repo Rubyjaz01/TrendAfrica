@@ -9,6 +9,9 @@ import {
 import {
   createComment,
   getComments,
+  updateComment,
+  deleteComment,
+  getCommentCount,
 } from "../services/comment.service";
 
 import {
@@ -62,12 +65,6 @@ type PostCardProps = {
     postId: number
   ) => void;
 
-  /*
-   * Optional recommendation metadata.
-   *
-   * Home feed does not need to provide this.
-   * Explore can provide it.
-   */
   recommendationReasons?: string[];
 };
 
@@ -88,6 +85,9 @@ export default function PostCard({
   const [comments, setComments] =
     useState<Comment[]>([]);
 
+  const [commentCount, setCommentCount] =
+    useState(0);
+
   const [commentContent, setCommentContent] =
     useState("");
 
@@ -98,6 +98,9 @@ export default function PostCard({
     useState("");
 
   const [showComments, setShowComments] =
+    useState(false);
+
+  const [loadingComments, setLoadingComments] =
     useState(false);
 
   const [currentUserId, setCurrentUserId] =
@@ -129,6 +132,22 @@ export default function PostCard({
 
   const [reposting, setReposting] =
     useState(false);
+
+  // Comment editing state
+  const [editingCommentId, setEditingCommentId] =
+    useState<number | null>(null);
+
+  const [editingCommentContent, setEditingCommentContent] =
+    useState("");
+
+  const [savingCommentId, setSavingCommentId] =
+    useState<number | null>(null);
+
+  const [deletingCommentId, setDeletingCommentId] =
+    useState<number | null>(null);
+
+  const [commentActionError, setCommentActionError] =
+    useState("");
 
   /*
    * Load like count and current user's
@@ -220,21 +239,52 @@ export default function PostCard({
   }, []);
 
   /*
+   * Load comment count independently.
+   */
+  useEffect(() => {
+    async function loadCommentCount() {
+      try {
+        const response =
+          await getCommentCount(post.id);
+
+        setCommentCount(
+          response.data.count
+        );
+      } catch (error) {
+        console.error(
+          "Failed to load comment count:",
+          error
+        );
+      }
+    }
+
+    loadCommentCount();
+  }, [post.id]);
+
+  /*
    * Load comments.
    */
   async function loadComments() {
     try {
+      setLoadingComments(true);
+
       const response =
         await getComments(post.id);
 
       setComments(
         response.data
       );
+
+      setCommentCount(
+        response.data.length
+      );
     } catch (error) {
       console.error(
         "Failed to load comments:",
         error
       );
+    } finally {
+      setLoadingComments(false);
     }
   }
 
@@ -394,6 +444,167 @@ export default function PostCard({
       );
     } finally {
       setCommentLoading(false);
+    }
+  }
+
+  /*
+   * Start editing a comment.
+   */
+  function handleStartCommentEdit(
+    comment: Comment
+  ) {
+    if (
+      currentUserId !== comment.userId
+    ) {
+      return;
+    }
+
+    setCommentActionError("");
+
+    setEditingCommentId(
+      comment.id
+    );
+
+    setEditingCommentContent(
+      comment.content
+    );
+  }
+
+  /*
+   * Cancel comment editing.
+   */
+  function handleCancelCommentEdit() {
+    setEditingCommentId(null);
+    setEditingCommentContent("");
+    setCommentActionError("");
+  }
+
+  /*
+   * Save edited comment.
+   */
+  async function handleSaveCommentEdit(
+    commentId: number
+  ) {
+    const content =
+      editingCommentContent.trim();
+
+    if (!content) {
+      setCommentActionError(
+        "Comment cannot be empty"
+      );
+
+      return;
+    }
+
+    if (content.length > 500) {
+      setCommentActionError(
+        "Comment cannot exceed 500 characters"
+      );
+
+      return;
+    }
+
+    try {
+      setSavingCommentId(
+        commentId
+      );
+
+      setCommentActionError("");
+
+      const response =
+        await updateComment(
+          commentId,
+          content
+        );
+
+      setComments(
+        (currentComments) =>
+          currentComments.map(
+            (comment) =>
+              comment.id === commentId
+                ? response.data
+                : comment
+          )
+      );
+
+      handleCancelCommentEdit();
+    } catch (error: any) {
+      console.error(
+        "Failed to update comment:",
+        error
+      );
+
+      setCommentActionError(
+        error.response?.data
+          ?.message ||
+          "Failed to update comment"
+      );
+    } finally {
+      setSavingCommentId(null);
+    }
+  }
+
+  /*
+   * Delete comment.
+   */
+  async function handleDeleteComment(
+    comment: Comment
+  ) {
+    if (
+      currentUserId !== comment.userId
+    ) {
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to delete this comment?"
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingCommentId(
+        comment.id
+      );
+
+      setCommentActionError("");
+
+      await deleteComment(
+        comment.id
+      );
+
+      setComments(
+        (currentComments) =>
+          currentComments.filter(
+            (currentComment) =>
+              currentComment.id !==
+              comment.id
+          )
+      );
+
+      setCommentCount(
+        (currentCount) =>
+          Math.max(
+            0,
+            currentCount - 1
+          )
+      );
+    } catch (error: any) {
+      console.error(
+        "Failed to delete comment:",
+        error
+      );
+
+      setCommentActionError(
+        error.response?.data
+          ?.message ||
+          "Failed to delete comment"
+      );
+    } finally {
+      setDeletingCommentId(null);
     }
   }
 
@@ -625,6 +836,7 @@ export default function PostCard({
           }
           className="px-5 pb-5"
         >
+
           <textarea
             value={
               editContent
@@ -744,8 +956,8 @@ export default function PostCard({
         </button>
 
         <span className="text-sm text-gray-500">
-          {comments.length}{" "}
-          {comments.length === 1
+          {commentCount}{" "}
+          {commentCount === 1
             ? "Comment"
             : "Comments"}
         </span>
@@ -785,53 +997,203 @@ export default function PostCard({
       {showComments && (
         <div className="border-t px-5 py-4">
 
+          {commentActionError && (
+            <p className="mb-3 text-sm text-red-600">
+              {commentActionError}
+            </p>
+          )}
+
           <div className="space-y-3">
 
-            {comments.length ===
-            0 ? (
+            {loadingComments ? (
+              <p className="text-sm text-gray-500">
+                Loading comments...
+              </p>
+            ) : comments.length ===
+              0 ? (
               <p className="text-sm text-gray-500">
                 No comments yet.
               </p>
             ) : (
               comments.map(
-                (comment) => (
-                  <div
-                    key={
-                      comment.id
-                    }
-                    className="rounded-lg bg-gray-50 p-3"
-                  >
-                    <p className="font-medium text-gray-900">
-                      {
-                        comment.user
-                          .fullName
+                (comment) => {
+                  const isCommentOwner =
+                    currentUserId !== null &&
+                    currentUserId ===
+                      comment.userId;
+
+                  const isEditingComment =
+                    editingCommentId ===
+                    comment.id;
+
+                  return (
+                    <div
+                      key={
+                        comment.id
                       }
-                    </p>
+                      className="rounded-lg bg-gray-50 p-3"
+                    >
 
-                    {comment.user
-                      .username && (
-                      <p className="text-xs text-gray-500">
-                        @
-                        {
-                          comment.user
-                            .username
-                        }
-                      </p>
-                    )}
+                      <div className="flex items-start justify-between gap-3">
 
-                    <p className="mt-1 text-sm text-gray-800">
-                      {
-                        comment.content
-                      }
-                    </p>
+                        <div className="min-w-0">
 
-                    <p className="mt-1 text-xs text-gray-400">
-                      {new Date(
-                        comment.createdAt
-                      ).toLocaleString()}
-                    </p>
-                  </div>
-                )
+                          <p className="font-medium text-gray-900">
+                            {
+                              comment
+                                .user
+                                .fullName
+                            }
+                          </p>
+
+                          {comment.user
+                            .username && (
+                            <p className="text-xs text-gray-500">
+                              @
+                              {
+                                comment
+                                  .user
+                                  .username
+                              }
+                            </p>
+                          )}
+
+                        </div>
+
+                        {isCommentOwner &&
+                          !isEditingComment && (
+                            <div className="flex shrink-0 gap-3">
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleStartCommentEdit(
+                                    comment
+                                  )
+                                }
+                                className="text-xs font-medium text-blue-600 hover:underline"
+                              >
+                                Edit
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeleteComment(
+                                    comment
+                                  )
+                                }
+                                disabled={
+                                  deletingCommentId ===
+                                  comment.id
+                                }
+                                className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                              >
+                                {deletingCommentId ===
+                                comment.id
+                                  ? "Deleting..."
+                                  : "Delete"}
+                              </button>
+
+                            </div>
+                          )}
+
+                      </div>
+
+                      {isEditingComment ? (
+                        <div className="mt-2">
+
+                          <textarea
+                            value={
+                              editingCommentContent
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              setEditingCommentContent(
+                                event.target.value
+                              )
+                            }
+                            maxLength={500}
+                            rows={3}
+                            className="w-full rounded-lg border p-2 text-sm focus:border-blue-500 focus:outline-none"
+                          />
+
+                          <div className="mt-2 flex items-center justify-between">
+
+                            <span className="text-xs text-gray-500">
+                              {
+                                editingCommentContent.length
+                              }
+                              /500
+                            </span>
+
+                            <div className="flex gap-2">
+
+                              <button
+                                type="button"
+                                onClick={
+                                  handleCancelCommentEdit
+                                }
+                                disabled={
+                                  savingCommentId ===
+                                  comment.id
+                                }
+                                className="rounded-lg border px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                              >
+                                Cancel
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleSaveCommentEdit(
+                                    comment.id
+                                  )
+                                }
+                                disabled={
+                                  savingCommentId ===
+                                  comment.id
+                                }
+                                className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                              >
+                                {savingCommentId ===
+                                comment.id
+                                  ? "Saving..."
+                                  : "Save"}
+                              </button>
+
+                            </div>
+
+                          </div>
+
+                        </div>
+                      ) : (
+                        <>
+                          <p className="mt-1 whitespace-pre-wrap text-sm text-gray-800">
+                            {
+                              comment.content
+                            }
+                          </p>
+
+                          <p className="mt-1 text-xs text-gray-400">
+                            {new Date(
+                              comment.createdAt
+                            ).toLocaleString()}
+                          </p>
+
+                          {comment.updatedAt !==
+                            comment.createdAt && (
+                            <span className="text-xs text-gray-400">
+                              Edited
+                            </span>
+                          )}
+                        </>
+                      )}
+
+                    </div>
+                  );
+                }
               )
             )}
 
