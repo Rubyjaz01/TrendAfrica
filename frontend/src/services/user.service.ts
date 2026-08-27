@@ -25,12 +25,14 @@ export type UserPost = {
   createdAt: string;
   updatedAt: string;
   authorId: number;
+
   author: {
     id: number;
     fullName: string;
     username: string | null;
     avatar: string | null;
   };
+
   hashtags: Array<{
     hashtag: {
       id: number;
@@ -66,6 +68,24 @@ export async function getUserPosts(
 ) {
   const response = await api.get(
     `/users/${userId}/posts`,
+    {
+      params: {
+        page,
+        limit,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function getUserReposts(
+  userId: number,
+  page: number = 1,
+  limit: number = 10
+) {
+  const response = await api.get(
+    `/users/${userId}/reposts`,
     {
       params: {
         page,

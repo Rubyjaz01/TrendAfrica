@@ -73,14 +73,15 @@ export async function getUserPosts(
   page: number = 1,
   limit: number = 10
 ) {
-  const safePage =
-    Math.max(1, page);
+  const safePage = Math.max(
+    1,
+    page
+  );
 
-  const safeLimit =
-    Math.min(
-      Math.max(1, limit),
-      50
-    );
+  const safeLimit = Math.min(
+    Math.max(1, limit),
+    50
+  );
 
   const skip =
     (safePage - 1) *
@@ -135,13 +136,16 @@ export async function getUserPosts(
 
   return {
     posts,
+
     pagination: {
       total,
       page: safePage,
       limit: safeLimit,
       totalPages,
+
       hasNextPage:
         safePage < totalPages,
+
       hasPreviousPage:
         safePage > 1,
     },

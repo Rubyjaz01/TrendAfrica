@@ -127,3 +127,98 @@ export async function getRepostCount(
     },
   });
 }
+// Get posts reposted by a user
+export async function getUserReposts(
+  userId: number,
+  page: number = 1,
+  limit: number = 10
+) {
+  const safePage = Math.max(1, page);
+
+  const safeLimit = Math.min(
+    Math.max(1, limit),
+    50
+  );
+
+  const skip =
+    (safePage - 1) * safeLimit;
+
+  const [
+    reposts,
+    total,
+  ] = await Promise.all([
+    prisma.repost.findMany({
+      where: {
+        userId,
+      },
+
+      skip,
+
+      take: safeLimit,
+
+      include: {
+        post: {
+          include: {
+            author: {
+              select: {
+                id: true,
+                fullName: true,
+                username: true,
+                avatar: true,
+              },
+            },
+
+            hashtags: {
+              include: {
+                hashtag: true,
+              },
+            },
+          },
+        },
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+
+    prisma.repost.count({
+      where: {
+        userId,
+      },
+    }),
+  ]);
+
+  const totalPages =
+    Math.ceil(total / safeLimit);
+
+  return {
+    posts: reposts.map(
+      (repost) => ({
+        ...repost.post,
+
+        feedType: "REPOST" as const,
+
+        repostedBy: {
+          id: userId,
+        },
+
+        repostedAt:
+          repost.createdAt,
+      })
+    ),
+
+    pagination: {
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages,
+
+      hasNextPage:
+        safePage < totalPages,
+
+      hasPreviousPage:
+        safePage > 1,
+    },
+  };
+}

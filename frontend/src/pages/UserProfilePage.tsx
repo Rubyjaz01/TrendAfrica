@@ -8,10 +8,16 @@ import {
   getUserById,
   getUserStats,
   getUserPosts,
+  getUserReposts,
   type PublicUser,
   type UserStats,
   type UserPost,
 } from "../services/user.service";
+
+type ProfileTab =
+  | "posts"
+  | "media"
+  | "reposts";
 
 export default function UserProfilePage() {
   const { id } = useParams<{
@@ -27,16 +33,28 @@ export default function UserProfilePage() {
   const [posts, setPosts] =
     useState<UserPost[]>([]);
 
+  const [reposts, setReposts] =
+    useState<UserPost[]>([]);
+
+  const [activeTab, setActiveTab] =
+    useState<ProfileTab>("posts");
+
   const [loading, setLoading] =
     useState(true);
 
   const [postsLoading, setPostsLoading] =
     useState(true);
 
+  const [repostsLoading, setRepostsLoading] =
+    useState(false);
+
   const [error, setError] =
     useState("");
 
   const [postsError, setPostsError] =
+    useState("");
+
+  const [repostsError, setRepostsError] =
     useState("");
 
   useEffect(() => {
@@ -85,7 +103,7 @@ export default function UserProfilePage() {
   }, [id]);
 
   useEffect(() => {
-    async function loadProfileData() {
+    async function loadProfilePosts() {
       if (!id) {
         return;
       }
@@ -115,21 +133,66 @@ export default function UserProfilePage() {
         setPosts(postsResponse.data);
       } catch (error: any) {
         console.error(
-          "Failed to load profile data:",
+          "Failed to load profile posts:",
           error
         );
 
         setPostsError(
           error.response?.data?.message ||
-            "Failed to load profile content"
+            "Failed to load profile posts"
         );
       } finally {
         setPostsLoading(false);
       }
     }
 
-    loadProfileData();
+    loadProfilePosts();
   }, [id]);
+
+  useEffect(() => {
+    async function loadProfileReposts() {
+      if (
+        activeTab !== "reposts" ||
+        !id ||
+        reposts.length > 0
+      ) {
+        return;
+      }
+
+      const userId = Number(id);
+
+      if (
+        !Number.isInteger(userId) ||
+        userId <= 0
+      ) {
+        return;
+      }
+
+      try {
+        setRepostsLoading(true);
+        setRepostsError("");
+
+        const response =
+          await getUserReposts(userId);
+
+        setReposts(response.data);
+      } catch (error: any) {
+        console.error(
+          "Failed to load user reposts:",
+          error
+        );
+
+        setRepostsError(
+          error.response?.data?.message ||
+            "Failed to load reposts"
+        );
+      } finally {
+        setRepostsLoading(false);
+      }
+    }
+
+    loadProfileReposts();
+  }, [activeTab, id, reposts.length]);
 
   function handlePostDeleted(
     postId: number
@@ -153,11 +216,34 @@ export default function UserProfilePage() {
     );
   }
 
+  function renderPost(
+    post: UserPost,
+    allowDelete: boolean
+  ) {
+    return (
+      <PostCard
+        key={post.id}
+        post={{
+          id: post.id,
+          content: post.content,
+          image: post.image,
+          createdAt: post.createdAt,
+          author: post.author,
+        }}
+        onPostDeleted={
+          allowDelete
+            ? handlePostDeleted
+            : undefined
+        }
+      />
+    );
+  }
+
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="animate-pulse">
-          <div className="h-48 rounded-2xl bg-gray-200" />
+          <div className="h-48 rounded-2xl bg-gray-200 sm:h-56" />
 
           <div className="-mt-12 ml-6 h-24 w-24 rounded-full border-4 border-white bg-gray-300" />
 
@@ -178,6 +264,28 @@ export default function UserProfilePage() {
       </div>
     );
   }
+
+  const mediaPosts =
+    posts.filter(
+      (post) => Boolean(post.image)
+    );
+
+  const visiblePosts =
+    activeTab === "posts"
+      ? posts
+      : activeTab === "media"
+      ? mediaPosts
+      : reposts;
+
+  const visibleError =
+    activeTab === "reposts"
+      ? repostsError
+      : postsError;
+
+  const visibleLoading =
+    activeTab === "reposts"
+      ? repostsLoading
+      : postsLoading;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6">
@@ -204,7 +312,7 @@ export default function UserProfilePage() {
           )}
         </div>
 
-        {/* Profile content */}
+        {/* Profile Content */}
 
         <div className="px-5 pb-6 sm:px-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -261,6 +369,7 @@ export default function UserProfilePage() {
                 <span aria-hidden="true">
                   📍
                 </span>
+
                 {user.location}
               </span>
             )}
@@ -319,55 +428,114 @@ export default function UserProfilePage() {
         </div>
       </section>
 
-      {/* Posts */}
+      {/* Profile Tabs */}
 
-      <section className="mt-6">
-        <div className="border-b border-gray-200 pb-3">
-          <h2 className="text-lg font-bold text-gray-900">
+      <section className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="grid grid-cols-3 border-b border-gray-200">
+          <button
+            type="button"
+            onClick={() =>
+              setActiveTab("posts")
+            }
+            className={`relative px-4 py-4 text-sm font-semibold transition ${
+              activeTab === "posts"
+                ? "text-blue-600"
+                : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+            }`}
+          >
             Posts
-          </h2>
-        </div>
 
-        {postsError && (
-          <p className="mt-4 text-center text-sm text-red-600">
-            {postsError}
+            {activeTab === "posts" && (
+              <span className="absolute bottom-0 left-0 h-0.5 w-full bg-blue-600" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setActiveTab("media")
+            }
+            className={`relative px-4 py-4 text-sm font-semibold transition ${
+              activeTab === "media"
+                ? "text-blue-600"
+                : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+            }`}
+          >
+            Media
+
+            {activeTab === "media" && (
+              <span className="absolute bottom-0 left-0 h-0.5 w-full bg-blue-600" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setActiveTab("reposts")
+            }
+            className={`relative px-4 py-4 text-sm font-semibold transition ${
+              activeTab === "reposts"
+                ? "text-blue-600"
+                : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+            }`}
+          >
+            Reposts
+
+            {activeTab === "reposts" && (
+              <span className="absolute bottom-0 left-0 h-0.5 w-full bg-blue-600" />
+            )}
+          </button>
+        </div>
+      </section>
+
+      {/* Tab Content */}
+
+      <section className="mt-4">
+        {visibleError && (
+          <p className="mb-4 text-center text-sm text-red-600">
+            {visibleError}
           </p>
         )}
 
-        {postsLoading ? (
-          <div className="mt-4 space-y-4">
+        {visibleLoading ? (
+          <div className="space-y-4">
             <div className="h-40 animate-pulse rounded-xl bg-gray-200" />
 
             <div className="h-40 animate-pulse rounded-xl bg-gray-200" />
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="mt-6 rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
-            <p className="font-medium text-gray-700">
-              No posts yet.
-            </p>
-
-            <p className="mt-1 text-sm text-gray-500">
-              This user hasn't published
-              anything yet.
-            </p>
           </div>
         ) : (
-          <div className="mt-4 space-y-4">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={{
-                  ...post,
-                  feedType: "POST",
-                  repostedBy: null,
-                  repostedAt: null,
-                }}
-                onPostDeleted={
-                  handlePostDeleted
-                }
-              />
-            ))}
-          </div>
+          <>
+            {visiblePosts.length === 0 ? (
+              <div className="mt-6 rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+                <p className="font-medium text-gray-700">
+                  {activeTab === "posts"
+                    ? "No posts yet."
+                    : activeTab === "media"
+                    ? "No media posts yet."
+                    : "No reposts yet."}
+                </p>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  {activeTab === "posts"
+                    ? "This user hasn't published anything yet."
+                    : activeTab === "media"
+                    ? "This user hasn't shared any images yet."
+                    : "This user hasn't reposted anything yet."}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {visiblePosts.map(
+                  (post) =>
+                    renderPost(
+                      post,
+                      activeTab !==
+                        "reposts"
+                    )
+                )}
+              </div>
+            )}
+          </>
         )}
       </section>
     </main>
