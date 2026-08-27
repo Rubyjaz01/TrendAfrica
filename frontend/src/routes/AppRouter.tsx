@@ -12,6 +12,8 @@ import HomePage from "../pages/HomePage";
 import ProfilePage from "../pages/ProfilePage";
 import SearchPage from "../pages/SearchPage";
 import UserProfilePage from "../pages/UserProfilePage";
+import FollowersPage from "../pages/FollowersPage";
+import FollowingPage from "../pages/FollowingPage";
 import NotificationsPage from "../pages/NotificationsPage";
 import ExplorePage from "../pages/ExplorePage";
 import HashtagPage from "../pages/HashtagPage";
@@ -21,11 +23,9 @@ import Navigation from "../components/Navigation";
 export default function AppRouter() {
   return (
     <BrowserRouter>
-
       <Navigation />
 
       <Routes>
-
         {/* Public Routes */}
 
         <Route
@@ -49,7 +49,7 @@ export default function AppRouter() {
           }
         />
 
-        {/* Profile */}
+        {/* My Profile */}
 
         <Route
           path="/profile"
@@ -104,7 +104,7 @@ export default function AppRouter() {
           }
         />
 
-        {/* User Profile */}
+        {/* Public User Profile */}
 
         <Route
           path="/users/:id"
@@ -115,15 +115,35 @@ export default function AppRouter() {
           }
         />
 
+        {/* User Followers */}
+
+        <Route
+          path="/users/:id/followers"
+          element={
+            <ProtectedRoute>
+              <FollowersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* User Following */}
+
+        <Route
+          path="/users/:id/following"
+          element={
+            <ProtectedRoute>
+              <FollowingPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Fallback */}
 
         <Route
           path="*"
           element={<LoginPage />}
         />
-
       </Routes>
-
     </BrowserRouter>
   );
 }
