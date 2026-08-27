@@ -1,6 +1,8 @@
 import api from "../api/api";
 
-export async function toggleLike(postId: number) {
+export async function toggleLike(
+  postId: number
+) {
   const response = await api.post(
     `/likes/${postId}/like`
   );
@@ -8,9 +10,21 @@ export async function toggleLike(postId: number) {
   return response.data;
 }
 
-export async function getLikeCount(postId: number) {
+export async function getLikeCount(
+  postId: number
+) {
   const response = await api.get(
     `/likes/${postId}/likes`
+  );
+
+  return response.data;
+}
+
+export async function checkLike(
+  postId: number
+) {
+  const response = await api.get(
+    `/likes/${postId}/like-status`
   );
 
   return response.data;

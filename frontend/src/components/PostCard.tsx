@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   getLikeCount,
   toggleLike,
+  checkLike,
 } from "../services/like.service";
 
 import {
@@ -130,26 +131,36 @@ export default function PostCard({
     useState(false);
 
   /*
-   * Load like count.
+   * Load like count and current user's
+   * like status.
    */
   useEffect(() => {
-    async function loadLikeCount() {
+    async function loadLikeData() {
       try {
-        const response =
-          await getLikeCount(post.id);
+        const [
+          countResponse,
+          statusResponse,
+        ] = await Promise.all([
+          getLikeCount(post.id),
+          checkLike(post.id),
+        ]);
 
         setLikeCount(
-          response.data.count
+          countResponse.data.count
+        );
+
+        setLiked(
+          statusResponse.data.liked
         );
       } catch (error) {
         console.error(
-          "Failed to load like count:",
+          "Failed to load like data:",
           error
         );
       }
     }
 
-    loadLikeCount();
+    loadLikeData();
   }, [post.id]);
 
   /*
@@ -216,7 +227,9 @@ export default function PostCard({
       const response =
         await getComments(post.id);
 
-      setComments(response.data);
+      setComments(
+        response.data
+      );
     } catch (error) {
       console.error(
         "Failed to load comments:",
@@ -342,6 +355,7 @@ export default function PostCard({
       setCommentError(
         "Comment cannot be empty"
       );
+
       return;
     }
 
@@ -349,6 +363,7 @@ export default function PostCard({
       setCommentError(
         "Comment cannot exceed 500 characters"
       );
+
       return;
     }
 
@@ -397,6 +412,7 @@ export default function PostCard({
       setEditError(
         "Post content is required"
       );
+
       return;
     }
 
@@ -404,6 +420,7 @@ export default function PostCard({
       setEditError(
         "Post cannot exceed 1000 characters"
       );
+
       return;
     }
 
@@ -489,10 +506,13 @@ export default function PostCard({
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-sm transition hover:shadow-md">
+
       {/* Author header */}
 
       <div className="flex items-start justify-between p-5">
+
         <div className="flex min-w-0 items-center gap-3">
+
           {post.author.avatar ? (
             <img
               src={
@@ -512,23 +532,31 @@ export default function PostCard({
           )}
 
           <div className="min-w-0">
+
             <p className="truncate font-semibold text-gray-900">
-              {post.author.fullName}
+              {
+                post.author
+                  .fullName
+              }
             </p>
 
-            {post.author.username && (
+            {post.author
+              .username && (
               <p className="truncate text-sm text-gray-500">
                 @
                 {
-                  post.author.username
+                  post.author
+                    .username
                 }
               </p>
             )}
+
           </div>
         </div>
 
         {isOwner && (
           <div className="ml-3 flex shrink-0 gap-3">
+
             <button
               type="button"
               onClick={() =>
@@ -549,15 +577,19 @@ export default function PostCard({
               onClick={
                 handleDelete
               }
-              disabled={deleting}
+              disabled={
+                deleting
+              }
               className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50"
             >
               {deleting
                 ? "Deleting..."
                 : "Delete"}
             </button>
+
           </div>
         )}
+
       </div>
 
       {/* Recommendation reasons */}
@@ -565,7 +597,9 @@ export default function PostCard({
       {recommendationReasons.length >
         0 && (
         <div className="px-5 pb-3">
+
           <div className="flex flex-wrap gap-2">
+
             {recommendationReasons.map(
               (reason) => (
                 <span
@@ -576,7 +610,9 @@ export default function PostCard({
                 </span>
               )
             )}
+
           </div>
+
         </div>
       )}
 
@@ -593,7 +629,9 @@ export default function PostCard({
             value={
               editContent
             }
-            onChange={(event) =>
+            onChange={(
+              event
+            ) =>
               setEditContent(
                 event.target.value
               )
@@ -605,8 +643,12 @@ export default function PostCard({
 
           <input
             type="url"
-            value={editImage}
-            onChange={(event) =>
+            value={
+              editImage
+            }
+            onChange={(
+              event
+            ) =>
               setEditImage(
                 event.target.value
               )
@@ -616,6 +658,7 @@ export default function PostCard({
           />
 
           <div className="mt-2 flex items-center justify-between">
+
             <span className="text-xs text-gray-500">
               {
                 editContent.length
@@ -634,6 +677,7 @@ export default function PostCard({
                 ? "Saving..."
                 : "Save Changes"}
             </button>
+
           </div>
 
           {editError && (
@@ -641,6 +685,7 @@ export default function PostCard({
               {editError}
             </p>
           )}
+
         </form>
       ) : (
         <div className="px-5 pb-5">
@@ -663,15 +708,18 @@ export default function PostCard({
       {/* Interaction bar */}
 
       <div className="flex flex-wrap items-center gap-5 border-t px-5 py-4">
+
         <button
           type="button"
-          onClick={handleLike}
+          onClick={
+            handleLike
+          }
           disabled={liking}
           className={`font-medium transition ${
             liked
               ? "text-red-600"
               : "text-gray-600 hover:text-red-600"
-          }`}
+          } disabled:opacity-50`}
         >
           {liked
             ? "Liked"
@@ -729,13 +777,16 @@ export default function PostCard({
             ? "Repost"
             : "Reposts"}
         </span>
+
       </div>
 
       {/* Comments */}
 
       {showComments && (
         <div className="border-t px-5 py-4">
+
           <div className="space-y-3">
+
             {comments.length ===
             0 ? (
               <p className="text-sm text-gray-500">
@@ -783,6 +834,7 @@ export default function PostCard({
                 )
               )
             )}
+
           </div>
 
           <form
@@ -791,11 +843,14 @@ export default function PostCard({
             }
             className="mt-4"
           >
+
             <textarea
               value={
                 commentContent
               }
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 setCommentContent(
                   event.target.value
                 )
@@ -807,6 +862,7 @@ export default function PostCard({
             />
 
             <div className="mt-1 flex items-center justify-between">
+
               <span className="text-xs text-gray-500">
                 {
                   commentContent.length
@@ -825,6 +881,7 @@ export default function PostCard({
                   ? "Commenting..."
                   : "Comment"}
               </button>
+
             </div>
 
             {commentError && (
@@ -832,7 +889,9 @@ export default function PostCard({
                 {commentError}
               </p>
             )}
+
           </form>
+
         </div>
       )}
 
@@ -843,6 +902,7 @@ export default function PostCard({
           post.createdAt
         ).toLocaleString()}
       </p>
+
     </article>
   );
 }

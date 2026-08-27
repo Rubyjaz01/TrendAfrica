@@ -22,8 +22,8 @@ export async function toggleLike(
     await prisma.like.findUnique({
       where: {
         userId_postId: {
-          userId: userId,
-          postId: postId,
+          userId,
+          postId,
         },
       },
     });
@@ -33,8 +33,8 @@ export async function toggleLike(
     await prisma.like.delete({
       where: {
         userId_postId: {
-          userId: userId,
-          postId: postId,
+          userId,
+          postId,
         },
       },
     });
@@ -48,19 +48,22 @@ export async function toggleLike(
   // Like
   await prisma.like.create({
     data: {
-      userId: userId,
-      postId: postId,
+      userId,
+      postId,
     },
   });
 
   // Create notification for the post owner
-  await createNotification(
-    post.authorId,
-    userId,
-    "LIKE",
-    "Someone liked your post.",
-    postId
-  );
+  // Do not notify the user about their own like.
+  if (post.authorId !== userId) {
+    await createNotification(
+      post.authorId,
+      userId,
+      "LIKE",
+      "Someone liked your post.",
+      postId
+    );
+  }
 
   return {
     liked: true,
@@ -73,9 +76,47 @@ export async function getLikeCount(
 ) {
   const count = await prisma.like.count({
     where: {
-      postId: postId,
+      postId,
     },
   });
 
   return { count };
+}
+
+export async function checkLike(
+  userId: number,
+  postId: number
+) {
+  const post = await prisma.post.findUnique({
+    where: {
+      id: postId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!post) {
+    throw new AppError(
+      "Post not found",
+      404
+    );
+  }
+
+  const like =
+    await prisma.like.findUnique({
+      where: {
+        userId_postId: {
+          userId,
+          postId,
+        },
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+  return {
+    liked: Boolean(like),
+  };
 }
